@@ -102,13 +102,7 @@
                         </Import-Package>
                         <Export-Package>
                             !org.wso2.carbon.identity.application.authenticator.facebook.internal,
-                            org.wso2.carbon.identity.application.authenticatofacebookal.facebook.*;
-                            version="${carbon.identity.package.export.version}",
-                            org.wso2.carbon.identity.application.authenticafacebookcial.google.*;
-                            version="${carbon.identity.package.export.version}",
-                            org.wso2.carbon.identity.application.authenticafacebookcial.live.*;
-                            version="${carbon.identity.package.export.version}",
-                            org.wso2.carbon.identity.application.authenticatofacebookal.yahoo.*;
+                            org.wso2.carbon.identity.application.authenticator.facebook.*;
                             version="${carbon.identity.package.export.version}"
                         </Export-Package>
                     </instructions>
