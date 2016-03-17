@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package org.wso2.carbon.identity.application.authenticator.facebook.facebook;
+package org.wso2.carbon.identity.application.authenticator.facebook;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
