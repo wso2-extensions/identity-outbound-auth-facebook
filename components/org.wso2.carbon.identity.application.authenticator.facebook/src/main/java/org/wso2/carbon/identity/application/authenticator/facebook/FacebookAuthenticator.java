@@ -223,7 +223,7 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
             buildClaims(context, userInfoJson);
         } catch (ApplicationAuthenticatorException e) {
             log.error("Failed to process Facebook Connect response.", e);
-            throw new AuthenticationFailedException(e.getMessage(), e);
+            throw new AuthenticationFailedException(e.getMessage(), context.getSubject(), e);
         }
     }
 
