@@ -101,7 +101,7 @@
                         <Export-Package>
                             !org.wso2.carbon.identity.application.authenticator.facebook.internal,
                             org.wso2.carbon.identity.application.authenticator.facebook.*;
-                            version="${carbon.identity.package.export.version}"
+                            version="${identity.outbound.auth.facebook.export.version}"
                         </Export-Package>
                     </instructions>
                 </configuration>
