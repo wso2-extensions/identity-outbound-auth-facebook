@@ -37,11 +37,9 @@ import org.wso2.carbon.identity.application.authentication.framework.util.Framew
 import org.wso2.carbon.identity.application.common.model.ClaimMapping;
 import org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants;
 import org.wso2.carbon.identity.base.IdentityConstants;
-import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.core.util.IdentityIOStreamUtils;
+import org.wso2.carbon.identity.core.util.IdentityUtil;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -52,6 +50,8 @@ import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 public class FacebookAuthenticator extends AbstractApplicationAuthenticator implements
         FederatedApplicationAuthenticator {
@@ -66,7 +66,7 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
     /**
      * Initiate tokenEndpoint
      */
-    private void initTokenEndpoint() {
+    protected void initTokenEndpoint() {
         this.tokenEndpoint = getAuthenticatorConfig().getParameterMap().get(FacebookAuthenticatorConstants
                 .FB_TOKEN_URL);
         if (StringUtils.isBlank(this.tokenEndpoint)) {
@@ -77,7 +77,7 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
     /**
      * Initiate authorization server endpoint
      */
-    private void initOAuthEndpoint() {
+    protected void initOAuthEndpoint() {
         this.oAuthEndpoint = getAuthenticatorConfig().getParameterMap().get(FacebookAuthenticatorConstants
                 .FB_AUTHZ_URL);
         if (StringUtils.isBlank(this.oAuthEndpoint)) {
@@ -88,7 +88,7 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
     /**
      * Initiate userInfoEndpoint
      */
-    private void initUserInfoEndPoint() {
+    protected void initUserInfoEndPoint() {
         this.userInfoEndpoint = getAuthenticatorConfig().getParameterMap().get(FacebookAuthenticatorConstants
                 .FB_USER_INFO_URL);
         if (StringUtils.isBlank(this.userInfoEndpoint)) {
@@ -100,7 +100,7 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
      * Get the tokenEndpoint.
      * @return tokenEndpoint
      */
-    private String getTokenEndpoint() {
+    protected String getTokenEndpoint() {
         if (StringUtils.isBlank(this.tokenEndpoint)) {
             initTokenEndpoint();
         }
@@ -111,7 +111,7 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
      * Get the oAuthEndpoint.
      * @return oAuthEndpoint
      */
-    private String getAuthorizationServerEndpoint() {
+    protected String getAuthorizationServerEndpoint() {
         if (StringUtils.isBlank(this.oAuthEndpoint)) {
             initOAuthEndpoint();
         }
@@ -122,7 +122,7 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
      * Get the userInfoEndpoint.
      * @return userInfoEndpoint
      */
-    private String getUserInfoEndpoint() {
+    protected String getUserInfoEndpoint() {
         if (StringUtils.isBlank(this.userInfoEndpoint)) {
             initUserInfoEndPoint();
         }
@@ -233,7 +233,7 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
         }
     }
 
-    private String getAuthorizationCode(HttpServletRequest request) throws ApplicationAuthenticatorException {
+    protected String getAuthorizationCode(HttpServletRequest request) throws ApplicationAuthenticatorException {
         OAuthAuthzResponse authzResponse;
         try {
             authzResponse = OAuthAuthzResponse.oauthCodeAuthzResponse(request);
@@ -243,7 +243,7 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
         }
     }
 
-    private String getToken(String tokenEndPoint, String clientId, String clientSecret,
+    protected String getToken(String tokenEndPoint, String clientId, String clientSecret,
                             String callbackurl, String code) throws ApplicationAuthenticatorException {
         OAuthClientRequest tokenRequest = null;
         String token = null;
@@ -251,9 +251,12 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
             tokenRequest =
                     buidTokenRequest(tokenEndPoint, clientId, clientSecret, callbackurl,
                             code);
-            token = sendRequest(tokenRequest.getLocationUri());
-            if (token.startsWith("{")) {
-                throw new ApplicationAuthenticatorException("Received access token is invalid.");
+            String tokenResponse = sendRequest(tokenRequest.getLocationUri());
+            Map<String, Object> jsonObject = JSONUtils.parseJSON(tokenResponse);
+            token = (String) jsonObject.get(FacebookAuthenticatorConstants.FB_ACCESS_TOKEN);
+
+            if (StringUtils.isEmpty(token)) {
+                throw new ApplicationAuthenticatorException("Could not receive a valid access token from FB");
             }
         } catch (MalformedURLException e) {
             if (log.isDebugEnabled()) {
@@ -268,7 +271,7 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
         return token;
     }
 
-    private OAuthClientRequest buidTokenRequest(
+    protected OAuthClientRequest buidTokenRequest(
             String tokenEndPoint, String clientId, String clientSecret, String callbackurl, String code)
             throws ApplicationAuthenticatorException {
         OAuthClientRequest tokenRequest = null;
@@ -284,14 +287,15 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
         return tokenRequest;
     }
 
-    private String getUserInfoString(String fbAuthUserInfoUrl, String userInfoFields, String token)
+    protected String getUserInfoString(String fbAuthUserInfoUrl, String userInfoFields, String token)
             throws ApplicationAuthenticatorException {
         String userInfoString;
         try {
             if (StringUtils.isBlank(userInfoFields)) {
-                userInfoString = sendRequest(String.format("%s?%s", fbAuthUserInfoUrl, token));
+                userInfoString = sendRequest(String.format("%s?access_token=%s", fbAuthUserInfoUrl, token));
             } else {
-                userInfoString = sendRequest(String.format("%s?fields=%s&%s", fbAuthUserInfoUrl, userInfoFields, token));
+                userInfoString = sendRequest(String.format("%s?fields=%s&access_token=%s", fbAuthUserInfoUrl,
+                        userInfoFields, token));
             }
         } catch (MalformedURLException e) {
             if (log.isDebugEnabled()) {
@@ -308,7 +312,7 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
         return userInfoString;
     }
 
-    private void setSubject(AuthenticationContext context, Map<String, Object> jsonObject)
+    protected void setSubject(AuthenticationContext context, Map<String, Object> jsonObject)
             throws ApplicationAuthenticatorException {
         String authenticatedUserId = (String) jsonObject.get(FacebookAuthenticatorConstants.DEFAULT_USER_IDENTIFIER);
         if (StringUtils.isEmpty(authenticatedUserId)) {
@@ -319,7 +323,7 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
         context.setSubject(authenticatedUser);
     }
 
-    private Map<String, Object> getUserInfoJson(String fbAuthUserInfoUrl, String userInfoFields, String token)
+    protected Map<String, Object> getUserInfoJson(String fbAuthUserInfoUrl, String userInfoFields, String token)
             throws ApplicationAuthenticatorException {
 
         String userInfoString = getUserInfoString(fbAuthUserInfoUrl, userInfoFields, token);
@@ -330,7 +334,7 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
         return jsonObject;
     }
 
-    public void buildClaims(AuthenticationContext context, Map<String, Object> jsonObject)
+    protected void buildClaims(AuthenticationContext context, Map<String, Object> jsonObject)
             throws ApplicationAuthenticatorException {
         if (jsonObject != null) {
             Map<ClaimMapping, String> claims = new HashMap<ClaimMapping, String>();
@@ -380,7 +384,7 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
         }
     }
 
-    private String sendRequest(String url) throws IOException {
+    protected String sendRequest(String url) throws IOException {
 
         BufferedReader in = null;
         StringBuilder b = new StringBuilder();
@@ -401,7 +405,7 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
         return b.toString();
     }
 
-    private String getLoginType(HttpServletRequest request) {
+    protected String getLoginType(HttpServletRequest request) {
         String state = request.getParameter(FacebookAuthenticatorConstants.OAUTH2_PARAM_STATE);
         if (state != null) {
             return state.split(",")[1];
