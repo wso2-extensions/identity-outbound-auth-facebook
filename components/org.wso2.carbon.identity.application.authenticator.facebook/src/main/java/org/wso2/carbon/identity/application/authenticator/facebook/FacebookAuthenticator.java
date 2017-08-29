@@ -340,312 +340,19 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
         if (jsonObject != null) {
             Map<ClaimMapping, String> claims = new HashMap<>();
             String claimUri;
-            String userInfoValue;
-            String userInfoKey;
+            Object claimValueObject;
 
             for (Map.Entry<String, Object> userInfo : jsonObject.entrySet()) {
-                userInfoValue = userInfo.getValue().toString();
-                userInfoKey = userInfo.getKey();
-                if (StringUtils.isNotEmpty(userInfoKey) && StringUtils.isNotEmpty(userInfoValue)) {
-                    switch (userInfoKey) {
-                        case FacebookAuthenticatorConstants.FacebookPermissions.ID:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.ID;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.COVER:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.COVER;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.NAME:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.NAME;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.FIRST_NAME:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.FIRST_NAME;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.LAST_NAME:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.LAST_NAME;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.AGE_RANGE:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.AGE_RANGE;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.LINK:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.LINK;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.GENDER:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.GENDER;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.LOCALE:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.LOCALE;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.PICTURE:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.PICTURE;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.TIMEZONE:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.TIMEZONE;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.UPDATED_TIME:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.UPDATED_TIME;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.VERIFIED:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.VERIFIED;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.USER_FRIENDS:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.USER_FRIENDS;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.EMAIL:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.EMAIL;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.USER_ABOUT_ME:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.USER_ABOUT_ME;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.USER_ACTIONS_BOOKS:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.USER_ACTIONS_BOOKS;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.USER_ACTIONS_FITNESS:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.USER_ACTIONS_FITNESS;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.USER_ACTIONS_MUSIC:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.USER_ACTIONS_MUSIC;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.USER_ACTIONS_NEWS:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.USER_ACTIONS_NEWS;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.USER_ACTIONS_VIDEO:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.USER_ACTIONS_VIDEO;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.USER_BIRTHDAY:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.USER_BIRTHDAY;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.USER_EDUCATION_HISTORY:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.USER_EDUCATION_HISTORY;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.USER_EVENTS:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.USER_EVENTS;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.USER_GAMES_ACTIVITY:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.USER_GAMES_ACTIVITY;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.USER_HOMETOWN:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.USER_HOMETOWN;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.USER_LIKES:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.USER_LIKES;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.USER_LOCATION:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.USER_LOCATION;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.USER_MANAGED_GROUPS:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.USER_MANAGED_GROUPS;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.USER_PHOTOS:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.USER_PHOTOS;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.USER_POSTS:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.USER_POSTS;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.USER_RELATIONSHIPS:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.USER_RELATIONSHIPS;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.USER_RELATIONSHIP_DETAILS:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.USER_RELATIONSHIP_DETAILS;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.USER_RELIGION_POLITICS:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.USER_RELIGION_POLITICS;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.USER_TAGGED_PLACES:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.USER_TAGGED_PLACES;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.USER_VIDEOS:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.USER_VIDEOS;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.USER_WEBSITE:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.USER_WEBSITE;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.USER_WORK_HISTORY:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.USER_WORK_HISTORY;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.READ_CUSTOM_FRIENDLISTS:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.READ_CUSTOM_FRIENDLISTS;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.READ_INSIGHTS:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.READ_INSIGHTS;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.READ_AUDIENCE_NETWORK_INSIGHTS:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.READ_AUDIENCE_NETWORK_INSIGHTS;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.READ_PAGE_MAILBOX:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.READ_PAGE_MAILBOX;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.MANAGE_PAGES:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.MANAGE_PAGES;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.PUBLISH_PAGES:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.PUBLISH_PAGES;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.PUBLISH_ACTIONS:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.PUBLISH_ACTIONS;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.RSVP_EVENTS:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.RSVP_EVENTS;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.PAGES_SHOW_LIST:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.PAGES_SHOW_LIST;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.PAGES_MANAGE_CTA:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.PAGES_MANAGE_CTA;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.PAGES_MANAGE_INSTANT_ARTICLES:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.PAGES_MANAGE_INSTANT_ARTICLES;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.ADS_READ:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.ADS_READ;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.ADS_MANAGEMENT:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.ADS_MANAGEMENT;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.BUSINESS_MANAGEMENT:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.BUSINESS_MANAGEMENT;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.PAGES_MESSAGING:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.PAGES_MESSAGING;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.PAGES_MESSAGING_SUBSCRIPTIONS:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.PAGES_MESSAGING_SUBSCRIPTIONS;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.PAGES_MESSAGING_PAYMENTS:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.PAGES_MESSAGING_PAYMENTS;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        case FacebookAuthenticatorConstants.FacebookPermissions.PAGES_MESSAGING_PHONE_NUMBER:
-                            claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                    FacebookAuthenticatorConstants.FacebookPermissions.PAGES_MESSAGING_PHONE_NUMBER;
-                            generateClaims(claimUri, claims, userInfoValue);
-                            break;
-                        default:
-                            //Check whether the claim is specific to particular facebook app, which is decide on runtime
-                            if (userInfoKey.toLowerCase().contains(FacebookAuthenticatorConstants.
-                                        FacebookPermissions.USER_ACTIONS_APP_NAMESPACE.toLowerCase())) {
-                                claimUri = FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                                        userInfoKey;
-                                generateClaims(claimUri, claims, userInfoValue);
-                            } else {
-                                if (log.isErrorEnabled()) {
-                                    log.error("The recieved user information from facebook cannot be mapped to any " +
-                                            "user information constants");
-                                }
-                                throw new ApplicationAuthenticatorException("User claim building failure");
-                            }
-                    }
+                claimUri            = userInfo.getKey();
+                claimValueObject    = userInfo.getValue();
+                if (StringUtils.isNotEmpty(claimUri) && claimValueObject != null && StringUtils.isNotEmpty(
+                        claimValueObject.toString())) {
+                    claims.put(buildClaimMapping(claimUri),claimValueObject.toString());
                 } else {
-                    if (log.isWarnEnabled()) {
-                        log.warn("The key or/and value of user information came from facebook is null or empty");
+                    if (log.isDebugEnabled()) {
+                        log.debug("The key or/and value of user information came from facebook is null or empty " +
+                                "for the user " +
+                                jsonObject.get(FacebookAuthenticatorConstants.DEFAULT_USER_IDENTIFIER));
                     }
                 }
             }
@@ -721,23 +428,16 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
         return FacebookAuthenticatorConstants.CLAIM_DIALECT_URI;
     }
 
-    /**
-     * This method is to associate the specified value with the specified key in MAP.
-     *
-     * @param claimUri The Claim URI
-     * @param claims   The map
-     * @param value    The value needs to be added in the MAP
-     */
-    private void generateClaims(String claimUri, Map<ClaimMapping, String> claims, String value) {
+    protected ClaimMapping buildClaimMapping(String claimUri) {
         if (log.isDebugEnabled()) {
             log.debug("Adding claim mapping" + claimUri);
         }
         ClaimMapping claimMapping = new ClaimMapping();
         Claim claim = new Claim();
-        claim.setClaimUri(claimUri);
+        claim.setClaimUri(FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" + claimUri);
         claimMapping.setRemoteClaim(claim);
         claimMapping.setLocalClaim(claim);
-        claims.put(claimMapping, value);
+        return claimMapping;
     }
 
     @Override
