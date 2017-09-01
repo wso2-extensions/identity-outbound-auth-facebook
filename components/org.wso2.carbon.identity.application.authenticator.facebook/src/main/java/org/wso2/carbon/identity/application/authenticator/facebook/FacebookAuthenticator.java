@@ -38,6 +38,8 @@ import org.wso2.carbon.identity.application.common.model.Claim;
 import org.wso2.carbon.identity.application.common.model.ClaimMapping;
 import org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants;
 import org.wso2.carbon.identity.base.IdentityConstants;
+import org.wso2.carbon.identity.claim.metadata.mgt.ClaimMetadataManagementServiceImpl;
+import org.wso2.carbon.identity.claim.metadata.mgt.model.ExternalClaim;
 import org.wso2.carbon.identity.core.util.IdentityIOStreamUtils;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 
@@ -50,6 +52,7 @@ import java.net.URLConnection;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -62,6 +65,7 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
     private String tokenEndpoint;
     private String oAuthEndpoint;
     private String userInfoEndpoint;
+    private List<ExternalClaim> externalClaims;
 
 
     /**
@@ -335,6 +339,27 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
         return jsonObject;
     }
 
+    /**
+     * Check whether there is a dedicated dialect defined for this connector.
+     *
+     * @param context The context
+     * @return true if claim is defined.
+     */
+    private boolean isClaimDialectExist(AuthenticationContext context) {
+        if (externalClaims == null) {
+            ClaimMetadataManagementServiceImpl claimMetadataService = new ClaimMetadataManagementServiceImpl();
+            try {
+                externalClaims = claimMetadataService.getExternalClaims(
+                        FacebookAuthenticatorConstants.CLAIM_DIALECT_URI,
+                        context.getTenantDomain());
+            } catch (Exception e) {
+                log.error(e);
+            }
+        }
+
+        return externalClaims != null && externalClaims.size() > 0;
+    }
+
     protected void buildClaims(AuthenticationContext context, Map<String, Object> jsonObject)
             throws ApplicationAuthenticatorException {
         if (jsonObject != null) {
@@ -346,8 +371,12 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
                 claimUri    = userInfo.getKey();
                 claimValue  = userInfo.getValue().toString();
                 if (StringUtils.isNotEmpty(claimUri) && StringUtils.isNotEmpty(claimValue)) {
-                    generateClaims(FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
-                            claimUri, claims, claimValue);
+                    if (isClaimDialectExist(context)) {
+                        generateClaims(FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
+                                claimUri, claims, claimValue);
+                    } else {
+                        generateClaims(claimUri, claims, claimValue);
+                    }
                 } else {
                     if (log.isDebugEnabled()) {
                         log.debug("The key or/and value of user information came from facebook is null or empty " +
@@ -425,7 +454,11 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
 
     @Override
     public String getClaimDialectURI() {
-        return FacebookAuthenticatorConstants.CLAIM_DIALECT_URI;
+        if (externalClaims.size() > 0) {
+            return FacebookAuthenticatorConstants.CLAIM_DIALECT_URI;
+        } else {
+            return null;
+        }
     }
 
     /**
