@@ -34,9 +34,12 @@ import org.wso2.carbon.identity.application.authentication.framework.exception.A
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkUtils;
+import org.wso2.carbon.identity.application.common.model.Claim;
 import org.wso2.carbon.identity.application.common.model.ClaimMapping;
 import org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants;
 import org.wso2.carbon.identity.base.IdentityConstants;
+import org.wso2.carbon.identity.claim.metadata.mgt.ClaimMetadataManagementServiceImpl;
+import org.wso2.carbon.identity.claim.metadata.mgt.model.ExternalClaim;
 import org.wso2.carbon.identity.core.util.IdentityIOStreamUtils;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 
@@ -49,6 +52,7 @@ import java.net.URLConnection;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -61,6 +65,7 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
     private String tokenEndpoint;
     private String oAuthEndpoint;
     private String userInfoEndpoint;
+    private List<ExternalClaim> externalClaims;
 
 
     /**
@@ -334,22 +339,55 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
         return jsonObject;
     }
 
+    /**
+     * Check whether there is a dedicated dialect defined for this connector.
+     *
+     * @param context The context
+     * @return true if claim is defined.
+     */
+    private boolean isClaimDialectExist(AuthenticationContext context) {
+        if (externalClaims == null) {
+            ClaimMetadataManagementServiceImpl claimMetadataService = new ClaimMetadataManagementServiceImpl();
+            try {
+                externalClaims = claimMetadataService.getExternalClaims(
+                        FacebookAuthenticatorConstants.CLAIM_DIALECT_URI,
+                        context.getTenantDomain());
+            } catch (Exception e) {
+                log.error(e);
+            }
+        }
+
+        return externalClaims != null && externalClaims.size() > 0;
+    }
+
     protected void buildClaims(AuthenticationContext context, Map<String, Object> jsonObject)
             throws ApplicationAuthenticatorException {
         if (jsonObject != null) {
-            Map<ClaimMapping, String> claims = new HashMap<ClaimMapping, String>();
+            Map<ClaimMapping, String> claims = new HashMap<>();
+            String claimUri;
+            String claimValue;
 
-            for (Map.Entry<String, Object> entry : jsonObject.entrySet()) {
-                claims.put(ClaimMapping.build(entry.getKey(), entry.getKey(), null,
-                        false), entry.getValue().toString());
-                if (log.isDebugEnabled() &&
-                        IdentityUtil.isTokenLoggable(IdentityConstants.IdentityTokens.USER_CLAIMS)) {
-                    log.debug("Adding claim mapping : " + entry.getKey() + " <> " + entry.getKey() + " : "
-                            + entry.getValue());
+            for (Map.Entry<String, Object> userInfo : jsonObject.entrySet()) {
+                claimUri    = userInfo.getKey();
+                claimValue  = userInfo.getValue().toString();
+                if (StringUtils.isNotEmpty(claimUri) && StringUtils.isNotEmpty(claimValue)) {
+                    if (isClaimDialectExist(context)) {
+                        generateClaims(FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" +
+                                claimUri, claims, claimValue);
+                    } else {
+                        generateClaims(claimUri, claims, claimValue);
+                    }
+                } else {
+                    if (log.isDebugEnabled()) {
+                        log.debug("The key or/and value of user information came from facebook is null or empty " +
+                                "for the user " +
+                                jsonObject.get(FacebookAuthenticatorConstants.DEFAULT_USER_IDENTIFIER));
+                    }
                 }
-
             }
-            if (StringUtils.isBlank(context.getExternalIdP().getIdentityProvider().getClaimConfig().getUserClaimURI())) {
+
+            if (StringUtils.isBlank(context.getExternalIdP().getIdentityProvider()
+                    .getClaimConfig().getUserClaimURI())) {
                 context.getExternalIdP().getIdentityProvider().getClaimConfig().setUserClaimURI
                         (FacebookAuthenticatorConstants.EMAIL);
             }
@@ -389,7 +427,7 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
         BufferedReader in = null;
         StringBuilder b = new StringBuilder();
 
-        try{
+        try {
             URLConnection urlConnection = new URL(url).openConnection();
             in = new BufferedReader(new InputStreamReader(urlConnection.getInputStream(), Charset.forName("utf-8")));
 
@@ -412,6 +450,34 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
         } else {
             return null;
         }
+    }
+
+    @Override
+    public String getClaimDialectURI() {
+        if (externalClaims.size() > 0) {
+            return FacebookAuthenticatorConstants.CLAIM_DIALECT_URI;
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * This method is to associate the specified value with the specified key in MAP.
+     *
+     * @param claimUri The Claim URI
+     * @param claims   The map
+     * @param value    The value needs to be added in the MAP
+     */
+    private void generateClaims(String claimUri, Map<ClaimMapping, String> claims, String value) {
+        if (log.isDebugEnabled()) {
+            log.debug("Adding claim mapping" + claimUri);
+        }
+        ClaimMapping claimMapping = new ClaimMapping();
+        Claim claim = new Claim();
+        claim.setClaimUri(claimUri);
+        claimMapping.setRemoteClaim(claim);
+        claimMapping.setLocalClaim(claim);
+        claims.put(claimMapping, value);
     }
 
     @Override
