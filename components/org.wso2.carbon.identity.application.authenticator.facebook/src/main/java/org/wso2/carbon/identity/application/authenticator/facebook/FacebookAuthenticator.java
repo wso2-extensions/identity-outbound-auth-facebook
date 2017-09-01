@@ -34,6 +34,7 @@ import org.wso2.carbon.identity.application.authentication.framework.exception.A
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkUtils;
+import org.wso2.carbon.identity.application.common.model.Claim;
 import org.wso2.carbon.identity.application.common.model.ClaimMapping;
 import org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants;
 import org.wso2.carbon.identity.base.IdentityConstants;
@@ -337,19 +338,27 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
     protected void buildClaims(AuthenticationContext context, Map<String, Object> jsonObject)
             throws ApplicationAuthenticatorException {
         if (jsonObject != null) {
-            Map<ClaimMapping, String> claims = new HashMap<ClaimMapping, String>();
+            Map<ClaimMapping, String> claims = new HashMap<>();
+            String claimUri;
+            Object claimValueObject;
 
-            for (Map.Entry<String, Object> entry : jsonObject.entrySet()) {
-                claims.put(ClaimMapping.build(entry.getKey(), entry.getKey(), null,
-                        false), entry.getValue().toString());
-                if (log.isDebugEnabled() &&
-                        IdentityUtil.isTokenLoggable(IdentityConstants.IdentityTokens.USER_CLAIMS)) {
-                    log.debug("Adding claim mapping : " + entry.getKey() + " <> " + entry.getKey() + " : "
-                            + entry.getValue());
+            for (Map.Entry<String, Object> userInfo : jsonObject.entrySet()) {
+                claimUri            = userInfo.getKey();
+                claimValueObject    = userInfo.getValue();
+                if (StringUtils.isNotEmpty(claimUri) && claimValueObject != null && StringUtils.isNotEmpty(
+                        claimValueObject.toString())) {
+                    claims.put(buildClaimMapping(claimUri),claimValueObject.toString());
+                } else {
+                    if (log.isDebugEnabled()) {
+                        log.debug("The key or/and value of user information came from facebook is null or empty " +
+                                "for the user " +
+                                jsonObject.get(FacebookAuthenticatorConstants.DEFAULT_USER_IDENTIFIER));
+                    }
                 }
-
             }
-            if (StringUtils.isBlank(context.getExternalIdP().getIdentityProvider().getClaimConfig().getUserClaimURI())) {
+
+            if (StringUtils.isBlank(context.getExternalIdP().getIdentityProvider()
+                    .getClaimConfig().getUserClaimURI())) {
                 context.getExternalIdP().getIdentityProvider().getClaimConfig().setUserClaimURI
                         (FacebookAuthenticatorConstants.EMAIL);
             }
@@ -389,7 +398,7 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
         BufferedReader in = null;
         StringBuilder b = new StringBuilder();
 
-        try{
+        try {
             URLConnection urlConnection = new URL(url).openConnection();
             in = new BufferedReader(new InputStreamReader(urlConnection.getInputStream(), Charset.forName("utf-8")));
 
@@ -412,6 +421,23 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
         } else {
             return null;
         }
+    }
+
+    @Override
+    public String getClaimDialectURI() {
+        return FacebookAuthenticatorConstants.CLAIM_DIALECT_URI;
+    }
+
+    protected ClaimMapping buildClaimMapping(String claimUri) {
+        if (log.isDebugEnabled()) {
+            log.debug("Adding claim mapping" + claimUri);
+        }
+        ClaimMapping claimMapping = new ClaimMapping();
+        Claim claim = new Claim();
+        claim.setClaimUri(FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" + claimUri);
+        claimMapping.setRemoteClaim(claim);
+        claimMapping.setLocalClaim(claim);
+        return claimMapping;
     }
 
     @Override
