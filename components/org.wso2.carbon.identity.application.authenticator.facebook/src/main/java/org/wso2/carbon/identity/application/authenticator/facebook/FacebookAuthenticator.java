@@ -425,18 +425,30 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
 
     @Override
     public String getClaimDialectURI() {
-        return FacebookAuthenticatorConstants.CLAIM_DIALECT_URI;
+        String claimDialectUri = super.getClaimDialectURI();
+        if (StringUtils.isNotEmpty(claimDialectUri)) {
+            return claimDialectUri;
+        } else {
+            return null;
+        }
     }
 
     protected ClaimMapping buildClaimMapping(String claimUri) {
+        ClaimMapping claimMapping = new ClaimMapping();
+        Claim claim = new Claim();
+        String claimDialectUri = getClaimDialectURI();
+        if (claimDialectUri == null) {
+            claimDialectUri = "";
+        } else {
+            claimDialectUri += "/";
+        }
+        claimUri =  claimDialectUri + claimUri;
+        claim.setClaimUri(claimUri);
+        claimMapping.setRemoteClaim(claim);
+        claimMapping.setLocalClaim(claim);
         if (log.isDebugEnabled()) {
             log.debug("Adding claim mapping" + claimUri);
         }
-        ClaimMapping claimMapping = new ClaimMapping();
-        Claim claim = new Claim();
-        claim.setClaimUri(FacebookAuthenticatorConstants.CLAIM_DIALECT_URI + "/" + claimUri);
-        claimMapping.setRemoteClaim(claim);
-        claimMapping.setLocalClaim(claim);
         return claimMapping;
     }
 
