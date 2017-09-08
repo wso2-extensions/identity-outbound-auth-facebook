@@ -39,7 +39,7 @@ public class FacebookAuthenticatorConstants {
     public static final String FB_CALLBACK_URL = "callBackUrl";
 
     public static final String FB_ACCESS_TOKEN = "access_token";
-    public static final String CLAIM_DIALECT_URI_PARAMETER = "FacebookClaimDialectUri";
+    public static final String CLAIM_DIALECT_URI_PARAMETER = "ClaimDialectUri";
 
     private FacebookAuthenticatorConstants() {
     }
