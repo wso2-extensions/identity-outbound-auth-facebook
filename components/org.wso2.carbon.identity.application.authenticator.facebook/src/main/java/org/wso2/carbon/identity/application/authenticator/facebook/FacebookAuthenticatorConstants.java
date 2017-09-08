@@ -39,8 +39,7 @@ public class FacebookAuthenticatorConstants {
     public static final String FB_CALLBACK_URL = "callBackUrl";
 
     public static final String FB_ACCESS_TOKEN = "access_token";
-
-    public static final String CLAIM_DIALECT_URI = "http://wso2.org/facebook/claims";
+    public static final String CLAIM_DIALECT_URI_PARAMETER = "FacebookClaimDialectUri";
 
     private FacebookAuthenticatorConstants() {
     }
