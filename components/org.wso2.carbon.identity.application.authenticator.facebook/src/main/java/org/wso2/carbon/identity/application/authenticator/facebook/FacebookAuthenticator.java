@@ -28,6 +28,8 @@ import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.apache.oltu.oauth2.common.utils.JSONUtils;
 import org.wso2.carbon.identity.application.authentication.framework.AbstractApplicationAuthenticator;
 import org.wso2.carbon.identity.application.authentication.framework.FederatedApplicationAuthenticator;
+import org.wso2.carbon.identity.application.authentication.framework.config.builder.FileBasedConfigurationBuilder;
+import org.wso2.carbon.identity.application.authentication.framework.config.model.AuthenticatorConfig;
 import org.wso2.carbon.identity.application.authentication.framework.context.AuthenticationContext;
 import org.wso2.carbon.identity.application.authentication.framework.exception.ApplicationAuthenticatorException;
 import org.wso2.carbon.identity.application.authentication.framework.exception.AuthenticationFailedException;
@@ -341,10 +343,17 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
             Map<ClaimMapping, String> claims = new HashMap<>();
             String claimUri;
             Object claimValueObject;
+            String claimDialectUri = getClaimDialectURI();
+            if (claimDialectUri == null) {
+                claimDialectUri = "";
+            } else {
+                claimDialectUri += "/";
+            }
 
             for (Map.Entry<String, Object> userInfo : jsonObject.entrySet()) {
                 claimUri            = userInfo.getKey();
                 claimValueObject    = userInfo.getValue();
+                claimUri            = claimDialectUri + claimUri;
                 if (StringUtils.isNotEmpty(claimUri) && claimValueObject != null && StringUtils.isNotEmpty(
                         claimValueObject.toString())) {
                     claims.put(buildClaimMapping(claimUri),claimValueObject.toString());
@@ -425,24 +434,33 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
 
     @Override
     public String getClaimDialectURI() {
-        String claimDialectUri = super.getClaimDialectURI();
-        if (StringUtils.isNotEmpty(claimDialectUri)) {
-            return claimDialectUri;
+        String claimDialectUri = null;
+        AuthenticatorConfig authConfig = FileBasedConfigurationBuilder.getInstance().getAuthenticatorBean(getName());
+        if (authConfig != null) {
+            Map<String, String> parameters = authConfig.getParameterMap();
+            if (parameters != null && parameters.containsKey(FacebookAuthenticatorConstants.
+                    CLAIM_DIALECT_URI_PARAMETER)) {
+                claimDialectUri = parameters.get(FacebookAuthenticatorConstants.CLAIM_DIALECT_URI_PARAMETER);
+            } else {
+                if (log.isDebugEnabled()) {
+                    log.debug("Found no Parameter map for connector " + getName());
+                }
+            }
         } else {
-            return null;
+            if (log.isDebugEnabled()) {
+                log.debug("FileBasedConfigBuilder returned null AuthenticatorConfigs for the connector " +
+                        getName());
+            }
         }
+        if (log.isDebugEnabled()) {
+            log.debug("Authenticator " + getName() + " is using the claim dialect uri " + claimDialectUri);
+        }
+        return claimDialectUri;
     }
 
     protected ClaimMapping buildClaimMapping(String claimUri) {
         ClaimMapping claimMapping = new ClaimMapping();
         Claim claim = new Claim();
-        String claimDialectUri = getClaimDialectURI();
-        if (claimDialectUri == null) {
-            claimDialectUri = "";
-        } else {
-            claimDialectUri += "/";
-        }
-        claimUri =  claimDialectUri + claimUri;
         claim.setClaimUri(claimUri);
         claimMapping.setRemoteClaim(claim);
         claimMapping.setLocalClaim(claim);
