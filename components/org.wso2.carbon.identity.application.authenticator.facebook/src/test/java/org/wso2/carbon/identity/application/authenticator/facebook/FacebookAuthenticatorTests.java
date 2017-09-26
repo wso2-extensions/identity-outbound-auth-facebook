@@ -23,7 +23,6 @@ import mockit.Delegate;
 import mockit.Expectations;
 import mockit.Mocked;
 import mockit.Tested;
-import org.apache.commons.logging.Log;
 import org.apache.oltu.oauth2.client.request.OAuthClientRequest;
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.testng.Assert;
