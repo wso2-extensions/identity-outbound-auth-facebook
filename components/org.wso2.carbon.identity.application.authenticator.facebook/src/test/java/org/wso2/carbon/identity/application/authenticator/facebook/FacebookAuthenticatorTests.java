@@ -250,10 +250,11 @@ public class FacebookAuthenticatorTests {
         }};
         mockFBAuthenticator.initiateAuthenticationRequest(mockHttpServletRequest, mockHttpServletResponse,
                 mockAuthenticationContext);
-        Assert.assertEquals(redirectedUrl[0], TestUtils.buildRedirectURL(TestConstants.customFacebookEndpoint,
-                "profile",
-                "code", TestConstants.callbackURL, TestConstants.dummyCommonAuthId + ",facebook", TestConstants
-                        .dummyClientId));
+
+        Assert.assertTrue(redirectedUrl[0].contains("scope=profile"));
+        Assert.assertTrue(redirectedUrl[0].contains("response_type=code"));
+        Assert.assertTrue(redirectedUrl[0].contains("client_id=" + TestConstants.dummyClientId));
+        Assert.assertTrue(redirectedUrl[0].contains("state=" + TestConstants.dummyCommonAuthId + "%2Cfacebook"));
     }
 
     @Test(expectedExceptions = AuthenticationFailedException.class)
@@ -313,9 +314,10 @@ public class FacebookAuthenticatorTests {
         }};
         mockFBAuthenticator.initiateAuthenticationRequest(mockHttpServletRequest, mockHttpServletResponse,
                 mockAuthenticationContext);
-        Assert.assertEquals(redirectedUrl[0], TestUtils.buildRedirectURL(IdentityApplicationConstants.FB_AUTHZ_URL,
-                "email", "code",
-                customHost, TestConstants.dummyCommonAuthId + ",facebook", TestConstants.dummyClientId));
+        Assert.assertTrue(redirectedUrl[0].contains("scope=email"));
+        Assert.assertTrue(redirectedUrl[0].contains("response_type=code"));
+        Assert.assertTrue(redirectedUrl[0].contains("client_id=" + TestConstants.dummyClientId));
+        Assert.assertTrue(redirectedUrl[0].contains("state=" + TestConstants.dummyCommonAuthId + "%2Cfacebook"));
     }
 
     private void buildExpectationsForInitiateReq(final String fbURL, final String scope, final String callbackURL) {
