@@ -22,7 +22,8 @@ import org.apache.oltu.oauth2.client.request.OAuthClientRequest;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-import org.wso2.carbon.identity.application.authentication.framework.exception.ApplicationAuthenticatorException;
+
+import java.net.URLEncoder;
 
 public class TestWithoutMockRequestBuilder {
     private FacebookAuthenticator facebookAuthenticator;
@@ -33,11 +34,14 @@ public class TestWithoutMockRequestBuilder {
     }
 
     @Test
-    public void testTokenRequest() throws ApplicationAuthenticatorException {
+    public void testTokenRequest() throws Exception {
         OAuthClientRequest oAuthClientRequest = facebookAuthenticator.buidTokenRequest(TestConstants.facebookTokenEndpoint,
                 TestConstants.dummyClientId, TestConstants.dummyClientSecret, TestConstants.callbackURL, TestConstants.dummyAuthCode);
-        Assert.assertNotNull(oAuthClientRequest);
-        Assert.assertEquals(oAuthClientRequest.getLocationUri(), TestUtils.getTokenRequestUrl());
+        Assert.assertTrue(oAuthClientRequest.getLocationUri().contains("client_secret=" + TestConstants.dummyClientSecret));
+        Assert.assertTrue(oAuthClientRequest.getLocationUri().contains("redirect_uri=" + URLEncoder.encode
+                (TestConstants.callbackURL)));
+        Assert.assertTrue(oAuthClientRequest.getLocationUri().contains("code=" + TestConstants.dummyAuthCode));
+        Assert.assertTrue(oAuthClientRequest.getLocationUri().contains("client_id=" + TestConstants.dummyClientId));
     }
 
 }
