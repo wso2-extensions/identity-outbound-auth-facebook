@@ -25,7 +25,6 @@ import mockit.Tested;
 import org.apache.commons.logging.Log;
 import org.apache.oltu.oauth2.client.response.OAuthAuthzResponse;
 import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
-import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -70,17 +69,14 @@ public class FacebookProcessResponseTests {
     }
 
     @Test(expectedExceptions = AuthenticationFailedException.class)
-    public void testProcessAuthResponseWithoutCode() throws ApplicationAuthenticatorException, OAuthSystemException,
-            AuthenticationFailedException, IOException {
-        buildExpextationsForProcessAuthnReq(TestConstants.customFacebookEndpoint, "profile", TestConstants.callbackURL);
+    public void testProcessAuthResponseWithoutCode() throws Exception {
+        buildExpectationsForProcessAuthnReq(TestConstants.customFacebookEndpoint, "profile", TestConstants.callbackURL);
         mockFBAuthenticator.processAuthenticationResponse(mockHttpServletRequest, mockHttpServletResponse,
                 mockAuthenticationContext);
     }
 
     @Test(expectedExceptions = AuthenticationFailedException.class)
-    public void testProcessAuthResponseWithFailedTokenReq() throws ApplicationAuthenticatorException,
-            OAuthSystemException,
-            AuthenticationFailedException, IOException, OAuthProblemException {
+    public void testProcessAuthResponseWithFailedTokenReq() throws Exception {
         mockIdentityUtil();
         new Expectations() {
             {
@@ -91,15 +87,13 @@ public class FacebookProcessResponseTests {
             }
         };
 
-        buildExpextationsForProcessAuthnReq(TestConstants.customFacebookEndpoint, "profile", null);
+        buildExpectationsForProcessAuthnReq(TestConstants.customFacebookEndpoint, "profile", null);
         mockFBAuthenticator.processAuthenticationResponse(mockHttpServletRequest, mockHttpServletResponse,
                 mockAuthenticationContext);
     }
 
     @Test
-    public void testProcessAuthResponseWithCode() throws ApplicationAuthenticatorException, OAuthSystemException,
-            AuthenticationFailedException, IOException, OAuthProblemException, NoSuchFieldException,
-            IllegalAccessException {
+    public void testProcessAuthResponseWithCode() throws Exception {
         TestUtils.enableDebugLogs(mockedLog);
         mockIdentityUtil();
         mockTokenAndUserInfoCalls(TestConstants.tokenResponse, TestConstants.userInfoResponse);
@@ -117,15 +111,13 @@ public class FacebookProcessResponseTests {
                 result = true;
             }
         };
-        buildExpextationsForProcessAuthnReq(TestConstants.customFacebookEndpoint, "profile", null);
+        buildExpectationsForProcessAuthnReq(TestConstants.customFacebookEndpoint, "profile", null);
         mockFBAuthenticator.processAuthenticationResponse(mockHttpServletRequest, mockHttpServletResponse,
                 mockAuthenticationContext);
     }
 
     @Test(expectedExceptions = AuthenticationFailedException.class)
-    public void testProcessAuthResponseWithErrorTokenResponse() throws ApplicationAuthenticatorException,
-            OAuthSystemException,
-            AuthenticationFailedException, IOException, OAuthProblemException {
+    public void testProcessAuthResponseWithErrorTokenResponse() throws Exception {
         mockIdentityUtil();
         mockTokenAndUserInfoCalls(TestConstants.tokenResponse.replace("$token", ""), TestConstants.userInfoResponse);
         new Expectations() {
@@ -136,15 +128,13 @@ public class FacebookProcessResponseTests {
                 result = TestConstants.dummyAuthCode;
             }
         };
-        buildExpextationsForProcessAuthnReq(TestConstants.customFacebookEndpoint, "profile", null);
+        buildExpectationsForProcessAuthnReq(TestConstants.customFacebookEndpoint, "profile", null);
         mockFBAuthenticator.processAuthenticationResponse(mockHttpServletRequest, mockHttpServletResponse,
                 mockAuthenticationContext);
     }
 
     @Test(expectedExceptions = ApplicationAuthenticatorException.class)
-    public void testGetTokenWithMalformedURI() throws ApplicationAuthenticatorException,
-            OAuthSystemException, AuthenticationFailedException, IOException, OAuthProblemException,
-            NoSuchFieldException, IllegalAccessException {
+    public void testGetTokenWithMalformedURI() throws Exception {
         TestUtils.enableDebugLogs(mockedLog);
         mockTokenAndUserInfoCalls(TestConstants.tokenResponse, TestConstants.userInfoResponse);
         new Expectations(mockFBAuthenticator) {{
@@ -156,9 +146,7 @@ public class FacebookProcessResponseTests {
     }
 
     @Test
-    public void testGetUserInfoWithFields() throws ApplicationAuthenticatorException,
-            OAuthSystemException,
-            AuthenticationFailedException, IOException, OAuthProblemException {
+    public void testGetUserInfoWithFields() throws Exception {
         mockTokenAndUserInfoCalls(TestConstants.tokenResponse, TestConstants.userInfoResponse);
         String userInfoString = mockFBAuthenticator.getUserInfoString(TestConstants.facebookTokenEndpoint,
                 "first_name,last_name", TestConstants.dummyAuthCode);
@@ -166,10 +154,7 @@ public class FacebookProcessResponseTests {
     }
 
     @Test(expectedExceptions = ApplicationAuthenticatorException.class)
-    public void getUserInfoWithMalformedURL() throws ApplicationAuthenticatorException,
-            OAuthSystemException,
-            AuthenticationFailedException, IOException, OAuthProblemException, NoSuchFieldException,
-            IllegalAccessException {
+    public void getUserInfoWithMalformedURL() throws Exception {
         TestUtils.enableDebugLogs(mockedLog);
         mockTokenAndUserInfoCalls(TestConstants.tokenResponse, TestConstants.userInfoResponse);
         new Expectations(mockFBAuthenticator) {{
@@ -181,9 +166,7 @@ public class FacebookProcessResponseTests {
     }
 
     @Test(expectedExceptions = ApplicationAuthenticatorException.class)
-    public void getUserInfoWithIOException() throws ApplicationAuthenticatorException,
-            OAuthSystemException,
-            AuthenticationFailedException, IOException, OAuthProblemException {
+    public void getUserInfoWithIOException() throws Exception {
         mockTokenAndUserInfoCalls(TestConstants.tokenResponse, TestConstants.userInfoResponse);
         new Expectations(mockFBAuthenticator) {{
             Deencapsulation.invoke(mockFBAuthenticator, "sendRequest", anyString);
@@ -194,7 +177,7 @@ public class FacebookProcessResponseTests {
     }
 
     @Test
-    public void getClaimDialectURIFromConfig() throws NoSuchFieldException, IllegalAccessException {
+    public void getClaimDialectURIFromConfig() throws Exception {
         TestUtils.enableDebugLogs(mockedLog);
         new Expectations() {{
             mockFileBasedConfigBuilder.getAuthenticatorBean(anyString);
@@ -208,8 +191,7 @@ public class FacebookProcessResponseTests {
     }
 
     @Test(expectedExceptions = ApplicationAuthenticatorException.class)
-    public void testGetAuthorizationCodeError() throws NoSuchFieldException, IllegalAccessException,
-            ApplicationAuthenticatorException, OAuthProblemException {
+    public void testGetAuthorizationCodeError() throws Exception {
         new Expectations() {{
             mockAuthzResponse.oauthCodeAuthzResponse(mockHttpServletRequest);
             result = OAuthProblemException.error("Something went wrong");
@@ -218,8 +200,7 @@ public class FacebookProcessResponseTests {
     }
 
     @Test(expectedExceptions = ApplicationAuthenticatorException.class)
-    public void testSetSubjectWithoutSubject() throws NoSuchFieldException, IllegalAccessException,
-            ApplicationAuthenticatorException, OAuthProblemException {
+    public void testSetSubjectWithoutSubject() throws Exception {
         new Expectations() {{
             mockAuthzResponse.oauthCodeAuthzResponse(mockHttpServletRequest);
             result = OAuthProblemException.error("Something went wrong");
@@ -227,7 +208,7 @@ public class FacebookProcessResponseTests {
         mockFBAuthenticator.getAuthorizationCode(mockHttpServletRequest);
     }
 
-    private void buildExpextationsForProcessAuthnReq(final String fbURL, final String scope, final String callbackURL) {
+    private void buildExpectationsForProcessAuthnReq(final String fbURL, final String scope, final String callbackURL) {
         new Expectations(mockFBAuthenticator) {{
             Deencapsulation.invoke(mockFBAuthenticator, "getAuthenticatorConfig");
             AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();

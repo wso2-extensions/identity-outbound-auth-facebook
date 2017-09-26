@@ -65,7 +65,7 @@ public class FacebookAuthenticatorTests {
     }
 
     @Test(expectedExceptions = ApplicationAuthenticatorException.class)
-    public void testTokenRequestException() throws ApplicationAuthenticatorException, OAuthSystemException {
+    public void testTokenRequestException() throws Exception {
 
         new Expectations() {{
             mockTokenRequestBuilder.buildQueryMessage();
@@ -75,13 +75,13 @@ public class FacebookAuthenticatorTests {
                 }
             };
         }};
-        OAuthClientRequest oAuthClientRequest = facebookAuthenticator.buidTokenRequest(TestConstants.facebookTokenEndpoint,
-                TestConstants.dummyClientId, TestConstants.dummyClientSecret, TestConstants.callbackURL,
-                TestConstants.dummyAuthCode);
+        OAuthClientRequest oAuthClientRequest = facebookAuthenticator.buidTokenRequest(TestConstants
+                        .facebookTokenEndpoint, TestConstants.dummyClientId, TestConstants.dummyClientSecret,
+                TestConstants.callbackURL, TestConstants.dummyAuthCode);
     }
 
     @Test
-    public void testInvalidTokenRequest() throws ApplicationAuthenticatorException, OAuthSystemException {
+    public void testInvalidTokenRequest() throws Exception {
         new Expectations() {
             { /* define in static block */
                 mockHttpServletRequest.getParameter("state");
@@ -94,7 +94,7 @@ public class FacebookAuthenticatorTests {
     }
 
     @Test
-    public void testCanHandle() throws ApplicationAuthenticatorException, OAuthSystemException {
+    public void testCanHandle() throws Exception {
         new Expectations() {
             { /* define in static block */
                 mockHttpServletRequest.getParameter(FacebookAuthenticatorConstants.OAUTH2_PARAM_STATE);
@@ -108,7 +108,7 @@ public class FacebookAuthenticatorTests {
     }
 
     @Test
-    public void canHandleFalse() throws ApplicationAuthenticatorException, OAuthSystemException {
+    public void canHandleFalse() throws Exception {
         new Expectations() {
             { /* define in static block */
                 mockHttpServletRequest.getParameter(FacebookAuthenticatorConstants.OAUTH2_PARAM_STATE);
@@ -131,7 +131,7 @@ public class FacebookAuthenticatorTests {
     }
 
     @Test
-    public void initTokenEndpointWithoutConfigs() throws ApplicationAuthenticatorException, OAuthSystemException {
+    public void initTokenEndpointWithoutConfigs() throws Exception {
         new Expectations(mockFBAuthenticator) {{
             Deencapsulation.invoke(mockFBAuthenticator, "getAuthenticatorConfig");
             AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
@@ -144,7 +144,7 @@ public class FacebookAuthenticatorTests {
     }
 
     @Test
-    public void initTokenEndpointWithConfigs() throws ApplicationAuthenticatorException, OAuthSystemException {
+    public void initTokenEndpointWithConfigs() throws Exception {
         new Expectations(mockFBAuthenticator) {{
             Deencapsulation.invoke(mockFBAuthenticator, "getAuthenticatorConfig");
             AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
@@ -161,7 +161,7 @@ public class FacebookAuthenticatorTests {
 
 
     @Test
-    public void initUserInfoEndpointWithConfigs() throws ApplicationAuthenticatorException, OAuthSystemException {
+    public void initUserInfoEndpointWithConfigs() throws Exception {
         new Expectations(mockFBAuthenticator) {{
             Deencapsulation.invoke(mockFBAuthenticator, "getAuthenticatorConfig");
             AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
@@ -177,7 +177,7 @@ public class FacebookAuthenticatorTests {
     }
 
     @Test
-    public void getStateTest() throws ApplicationAuthenticatorException, OAuthSystemException {
+    public void getStateTest() throws Exception {
         new Expectations(mockFBAuthenticator) {{
             Deencapsulation.invoke(mockFBAuthenticator, "getAuthenticatorConfig");
             AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
@@ -193,7 +193,7 @@ public class FacebookAuthenticatorTests {
     }
 
     @Test
-    public void initUserInfoEndpointWithoutConfigs() throws ApplicationAuthenticatorException, OAuthSystemException {
+    public void initUserInfoEndpointWithoutConfigs() throws Exception {
         new Expectations(mockFBAuthenticator) {{
             Deencapsulation.invoke(mockFBAuthenticator, "getAuthenticatorConfig");
             AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
@@ -207,12 +207,12 @@ public class FacebookAuthenticatorTests {
 
 
     @Test(expectedExceptions = IOException.class)
-    public void testSendRequestError() throws ApplicationAuthenticatorException, OAuthSystemException, IOException {
+    public void testSendRequestError() throws Exception {
         facebookAuthenticator.sendRequest(TestConstants.facebookTokenEndpoint);
     }
 
     @Test
-    public void testSendRequest() throws ApplicationAuthenticatorException, OAuthSystemException, IOException {
+    public void testSendRequest() throws Exception {
         Assert.assertNotNull(facebookAuthenticator.sendRequest("https://google.com"));
     }
 
@@ -224,7 +224,7 @@ public class FacebookAuthenticatorTests {
     }
 
     @Test
-    public void testGetLoginTypeWithNull() throws ApplicationAuthenticatorException, OAuthSystemException {
+    public void testGetLoginTypeWithNull() throws Exception {
         new Expectations() {
             {
                 mockHttpServletRequest.getParameter("state");
@@ -235,8 +235,7 @@ public class FacebookAuthenticatorTests {
     }
 
     @Test
-    public void testInitiateAuthRequest() throws ApplicationAuthenticatorException, OAuthSystemException,
-            AuthenticationFailedException, IOException {
+    public void testInitiateAuthRequest() throws Exception {
 
         final String[] redirectedUrl = new String[1];
         buildExpectationsForInitiateReq(TestConstants.customFacebookEndpoint, "profile", TestConstants.callbackURL);
@@ -258,8 +257,7 @@ public class FacebookAuthenticatorTests {
     }
 
     @Test(expectedExceptions = AuthenticationFailedException.class)
-    public void testInitAuthReqWithOAuthSystemException() throws ApplicationAuthenticatorException, OAuthSystemException,
-            AuthenticationFailedException, IOException {
+    public void testInitAuthReqWithOAuthSystemException() throws Exception {
 
         buildExpectationsForInitiateReq(TestConstants.customFacebookEndpoint, "profile", TestConstants.callbackURL);
         new Expectations() {{
@@ -275,8 +273,7 @@ public class FacebookAuthenticatorTests {
     }
 
     @Test(expectedExceptions = AuthenticationFailedException.class)
-    public void testInitiateAuthReqWithIOException() throws ApplicationAuthenticatorException, OAuthSystemException,
-            AuthenticationFailedException, IOException {
+    public void testInitiateAuthReqWithIOException() throws Exception {
 
         buildExpectationsForInitiateReq(TestConstants.customFacebookEndpoint, "profile", TestConstants.callbackURL);
         new Expectations() {{
@@ -293,8 +290,7 @@ public class FacebookAuthenticatorTests {
     }
 
     @Test
-    public void testInitiateAuthReqWithDefaultConfigs() throws ApplicationAuthenticatorException, OAuthSystemException,
-            AuthenticationFailedException, IOException {
+    public void testInitiateAuthReqWithDefaultConfigs() throws Exception {
         final String[] redirectedUrl = new String[1];
         final String customHost = "https://somehost:9443/commonauth";
         new Expectations() {
