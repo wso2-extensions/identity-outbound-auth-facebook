@@ -56,6 +56,7 @@ public class TestAuthnContextWithoutMocking {
 
     @Test
     public void testSetSubject() throws Exception {
+
         AuthenticationContext authenticationContext = new AuthenticationContext();
         Map<String, Object> jsonMap = new HashMap<>();
         jsonMap.put(FacebookAuthenticatorConstants.DEFAULT_USER_IDENTIFIER, TestConstants.dummyUsername);
@@ -66,6 +67,7 @@ public class TestAuthnContextWithoutMocking {
 
     @Test(expectedExceptions = ApplicationAuthenticatorException.class)
     public void testSetSubjectWithoutSubject() throws Exception {
+
         AuthenticationContext authenticationContext = new AuthenticationContext();
         Map<String, Object> jsonMap = new HashMap<>();
         facebookAuthenticator.setSubject(authenticationContext, jsonMap);
@@ -134,6 +136,7 @@ public class TestAuthnContextWithoutMocking {
     }
 
     private AuthenticationContext buildClaims(final String claimDialect) throws Exception {
+
         TestUtils.enableDebugLogs(mockedLog, FacebookAuthenticator.class);
         AuthenticationContext authenticationContext = new AuthenticationContext();
         ExternalIdPConfig externalIdPConfig = new ExternalIdPConfig(new IdentityProvider());

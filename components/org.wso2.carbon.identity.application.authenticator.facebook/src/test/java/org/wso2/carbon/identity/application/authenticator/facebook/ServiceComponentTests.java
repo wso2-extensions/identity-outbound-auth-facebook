@@ -51,6 +51,7 @@ public class ServiceComponentTests {
 
     @Test
     public void testSuccessfulActivate() throws Exception {
+
         TestUtils.enableDebugLogs(mockedLog, SocialAuthenticatorServiceComponent.class);
         final String[] classNameResult = new String[1];
         final Object[] authenticatorResult = new Object[1];
@@ -82,6 +83,7 @@ public class ServiceComponentTests {
 
     @Test
     public void testErroneousActivate() throws Exception {
+
         final String[] classNameResult = new String[1];
         final Object[] authenticatorResult = new Object[1];
         new Expectations() {{
@@ -98,6 +100,7 @@ public class ServiceComponentTests {
 
     @Test
     public void testDeactivate() throws Exception {
+
         TestUtils.enableDebugLogs(mockedLog, SocialAuthenticatorServiceComponent.class);
         Deencapsulation.invoke(socialAuthenticatorServiceComponent, "deactivate", mockComponentContext);
         // Deactivate method should be implemented within the service component and should run without giving exceptions

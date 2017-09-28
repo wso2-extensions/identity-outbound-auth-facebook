@@ -58,7 +58,6 @@ public class FacebookAuthenticatorTests {
     @Mocked
     private OAuthClientRequest.TokenRequestBuilder mockTokenRequestBuilder;
 
-
     @BeforeMethod
     public void setUp() throws Exception {
         facebookAuthenticator = new FacebookAuthenticator();
@@ -82,6 +81,7 @@ public class FacebookAuthenticatorTests {
 
     @Test
     public void testInvalidTokenRequest() throws Exception {
+
         new Expectations() {
             { /* define in static block */
                 mockHttpServletRequest.getParameter("state");
@@ -95,6 +95,7 @@ public class FacebookAuthenticatorTests {
 
     @Test
     public void testCanHandle() throws Exception {
+
         new Expectations() {
             { /* define in static block */
                 mockHttpServletRequest.getParameter(FacebookAuthenticatorConstants.OAUTH2_PARAM_STATE);
@@ -109,6 +110,7 @@ public class FacebookAuthenticatorTests {
 
     @Test
     public void canHandleFalse() throws Exception {
+
         new Expectations() {
             { /* define in static block */
                 mockHttpServletRequest.getParameter(FacebookAuthenticatorConstants.OAUTH2_PARAM_STATE);
@@ -132,6 +134,7 @@ public class FacebookAuthenticatorTests {
 
     @Test
     public void initTokenEndpointWithoutConfigs() throws Exception {
+
         new Expectations(mockFBAuthenticator) {{
             Deencapsulation.invoke(mockFBAuthenticator, "getAuthenticatorConfig");
             AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
@@ -145,6 +148,7 @@ public class FacebookAuthenticatorTests {
 
     @Test
     public void initTokenEndpointWithConfigs() throws Exception {
+
         new Expectations(mockFBAuthenticator) {{
             Deencapsulation.invoke(mockFBAuthenticator, "getAuthenticatorConfig");
             AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
@@ -161,6 +165,7 @@ public class FacebookAuthenticatorTests {
 
     @Test
     public void initUserInfoEndpointWithConfigs() throws Exception {
+
         new Expectations(mockFBAuthenticator) {{
             Deencapsulation.invoke(mockFBAuthenticator, "getAuthenticatorConfig");
             AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
@@ -177,6 +182,7 @@ public class FacebookAuthenticatorTests {
 
     @Test
     public void getStateTest() throws Exception {
+
         new Expectations(mockFBAuthenticator) {{
             Deencapsulation.invoke(mockFBAuthenticator, "getAuthenticatorConfig");
             AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
@@ -193,6 +199,7 @@ public class FacebookAuthenticatorTests {
 
     @Test
     public void initUserInfoEndpointWithoutConfigs() throws Exception {
+
         new Expectations(mockFBAuthenticator) {{
             Deencapsulation.invoke(mockFBAuthenticator, "getAuthenticatorConfig");
             AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
@@ -206,19 +213,24 @@ public class FacebookAuthenticatorTests {
 
     @Test(expectedExceptions = IOException.class)
     public void testSendRequestError() throws Exception {
+
         facebookAuthenticator.sendRequest(TestConstants.facebookTokenEndpoint);
     }
 
     @Test
     public void testSendRequest() throws Exception {
-        Assert.assertNotNull(facebookAuthenticator.sendRequest("https://google.com"));
+
+        Assert.assertNotNull(facebookAuthenticator.sendRequest("https://google.com"), "An error occured while doing " +
+                "redirection");
     }
 
 
     @Test
     public void testAuthenticatorNames() {
-        Assert.assertEquals(facebookAuthenticator.getName(), FacebookAuthenticatorConstants.AUTHENTICATOR_NAME);
-        Assert.assertEquals(facebookAuthenticator.getFriendlyName(), "facebook");
+        Assert.assertEquals(facebookAuthenticator.getName(), FacebookAuthenticatorConstants.AUTHENTICATOR_NAME, "FB " +
+                "Authenticator did not return expected name");
+        Assert.assertEquals(facebookAuthenticator.getFriendlyName(), "facebook", "FB authenticator did not return " +
+                "expected friendly name");
     }
 
     @Test
@@ -229,7 +241,8 @@ public class FacebookAuthenticatorTests {
                 result = null;
             }
         };
-        Assert.assertEquals(facebookAuthenticator.getLoginType(mockHttpServletRequest), null);
+        Assert.assertNull(facebookAuthenticator.getLoginType(mockHttpServletRequest), "getLoginType returned an " +
+                "unexpected result");
     }
 
     @Test
@@ -248,10 +261,13 @@ public class FacebookAuthenticatorTests {
         mockFBAuthenticator.initiateAuthenticationRequest(mockHttpServletRequest, mockHttpServletResponse,
                 mockAuthenticationContext);
 
-        Assert.assertTrue(redirectedUrl[0].contains("scope=profile"));
-        Assert.assertTrue(redirectedUrl[0].contains("response_type=code"));
-        Assert.assertTrue(redirectedUrl[0].contains("client_id=" + TestConstants.dummyClientId));
-        Assert.assertTrue(redirectedUrl[0].contains("state=" + TestConstants.dummyCommonAuthId + "%2Cfacebook"));
+        Assert.assertTrue(redirectedUrl[0].contains("scope=profile"), "Scope is not present in redirect url");
+        Assert.assertTrue(redirectedUrl[0].contains("response_type=code"), "Response type is not present in redirect " +
+                "url");
+        Assert.assertTrue(redirectedUrl[0].contains("client_id=" + TestConstants.dummyClientId), "Client ID is not " +
+                "present in redirect url");
+        Assert.assertTrue(redirectedUrl[0].contains("state=" + TestConstants.dummyCommonAuthId + "%2Cfacebook"),
+                "State parameter is not present in redirect url");
     }
 
     @Test(expectedExceptions = AuthenticationFailedException.class)
@@ -282,7 +298,6 @@ public class FacebookAuthenticatorTests {
                 }
             };
         }};
-
         mockFBAuthenticator.initiateAuthenticationRequest(mockHttpServletRequest, mockHttpServletResponse,
                 mockAuthenticationContext);
     }
@@ -309,13 +324,17 @@ public class FacebookAuthenticatorTests {
         }};
         mockFBAuthenticator.initiateAuthenticationRequest(mockHttpServletRequest, mockHttpServletResponse,
                 mockAuthenticationContext);
-        Assert.assertTrue(redirectedUrl[0].contains("scope=email"));
-        Assert.assertTrue(redirectedUrl[0].contains("response_type=code"));
-        Assert.assertTrue(redirectedUrl[0].contains("client_id=" + TestConstants.dummyClientId));
-        Assert.assertTrue(redirectedUrl[0].contains("state=" + TestConstants.dummyCommonAuthId + "%2Cfacebook"));
+        Assert.assertTrue(redirectedUrl[0].contains("scope=email"), "Scope is not present in redirection url");
+        Assert.assertTrue(redirectedUrl[0].contains("response_type=code"), "Response type is not present in redirect " +
+                "url");
+        Assert.assertTrue(redirectedUrl[0].contains("client_id=" + TestConstants.dummyClientId), "Client ID is not " +
+                "present in redirect url");
+        Assert.assertTrue(redirectedUrl[0].contains("state=" + TestConstants.dummyCommonAuthId + "%2Cfacebook"),
+                "State parameter is not present in redirect url");
     }
 
     private void buildExpectationsForInitiateReq(final String fbURL, final String scope, final String callbackURL) {
+
         new Expectations(mockFBAuthenticator) {{
             Deencapsulation.invoke(mockFBAuthenticator, "getAuthenticatorConfig");
             AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();

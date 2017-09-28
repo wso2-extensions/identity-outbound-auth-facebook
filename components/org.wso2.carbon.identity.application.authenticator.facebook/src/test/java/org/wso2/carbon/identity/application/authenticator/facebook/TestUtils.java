@@ -28,6 +28,7 @@ public class TestUtils {
 
     public static void enableDebugLogs(final Log mockedLog, Class className) throws NoSuchFieldException,
             IllegalAccessException {
+
         new Expectations() {{
             mockedLog.isDebugEnabled();
             result = true;

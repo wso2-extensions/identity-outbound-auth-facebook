@@ -35,6 +35,7 @@ public class TestWithoutMockRequestBuilder {
 
     @Test
     public void testTokenRequest() throws Exception {
+
         OAuthClientRequest oAuthClientRequest = facebookAuthenticator.buidTokenRequest(TestConstants.facebookTokenEndpoint,
                 TestConstants.dummyClientId, TestConstants.dummyClientSecret, TestConstants.callbackURL, TestConstants.dummyAuthCode);
         Assert.assertTrue(oAuthClientRequest.getLocationUri().contains("client_secret=" + TestConstants
