@@ -26,12 +26,13 @@ import java.lang.reflect.Modifier;
 
 public class TestUtils {
 
-    public static void enableDebugLogs(final Log mockedLog) throws NoSuchFieldException, IllegalAccessException {
+    public static void enableDebugLogs(final Log mockedLog, Class className) throws NoSuchFieldException,
+            IllegalAccessException {
         new Expectations() {{
             mockedLog.isDebugEnabled();
             result = true;
         }};
-        Field field = FacebookAuthenticator.class.getDeclaredField("log");
+        Field field = className.getDeclaredField("log");
         field.setAccessible(true);
         Field modifiersField = Field.class.getDeclaredField("modifiers");
         modifiersField.setAccessible(true);

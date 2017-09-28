@@ -46,17 +46,17 @@ public class FacebookAuthenticatorTests {
     private FacebookAuthenticator facebookAuthenticator;
 
     @Mocked
-    HttpServletRequest mockHttpServletRequest;
+    private HttpServletRequest mockHttpServletRequest;
     @Mocked
-    HttpServletResponse mockHttpServletResponse;
+    private HttpServletResponse mockHttpServletResponse;
     @Mocked
-    AuthenticationContext mockAuthenticationContext;
+    private AuthenticationContext mockAuthenticationContext;
     @Tested
-    FacebookAuthenticator mockFBAuthenticator;
+    private FacebookAuthenticator mockFBAuthenticator;
     @Mocked
-    IdentityUtil mockIdentityUtil;
+    private IdentityUtil mockIdentityUtil;
     @Mocked
-    OAuthClientRequest.TokenRequestBuilder mockTokenRequestBuilder;
+    private OAuthClientRequest.TokenRequestBuilder mockTokenRequestBuilder;
 
 
     @BeforeMethod
@@ -159,7 +159,6 @@ public class FacebookAuthenticatorTests {
         Assert.assertEquals(mockFBAuthenticator.getTokenEndpoint(), TestConstants.customFacebookEndpoint);
     }
 
-
     @Test
     public void initUserInfoEndpointWithConfigs() throws Exception {
         new Expectations(mockFBAuthenticator) {{
@@ -204,7 +203,6 @@ public class FacebookAuthenticatorTests {
         // Get it from instance variable for the second time
         Assert.assertEquals(mockFBAuthenticator.getUserInfoEndpoint(), IdentityApplicationConstants.FB_USER_INFO_URL);
     }
-
 
     @Test(expectedExceptions = IOException.class)
     public void testSendRequestError() throws Exception {
