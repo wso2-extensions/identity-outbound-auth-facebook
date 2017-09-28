@@ -289,6 +289,7 @@ public class FacebookAuthenticatorTests {
 
     @Test
     public void testInitiateAuthReqWithDefaultConfigs() throws Exception {
+
         final String[] redirectedUrl = new String[1];
         final String customHost = "https://somehost:9443/commonauth";
         new Expectations() {

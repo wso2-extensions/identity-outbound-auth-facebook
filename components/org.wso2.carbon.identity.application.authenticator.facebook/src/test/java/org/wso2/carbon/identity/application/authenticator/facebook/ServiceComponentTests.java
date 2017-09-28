@@ -59,9 +59,7 @@ public class ServiceComponentTests {
             result = new Delegate() {
                 BundleContext getBundleContext() {
                     return mockBundleContext;
-
                 }
-
             };
         }};
         new Expectations() {{
@@ -73,7 +71,6 @@ public class ServiceComponentTests {
                     authenticatorResult[0] = authenticator;
                     return null;
                 }
-
             };
         }};
         Deencapsulation.invoke(socialAuthenticatorServiceComponent, "activate", mockComponentContext);
@@ -90,11 +87,9 @@ public class ServiceComponentTests {
         new Expectations() {{
             mockComponentContext.getBundleContext();
             result = new Delegate() {
-                BundleContext getBundleContext() {
-                    return null;
-
+                BundleContext getBundleContext() throws Throwable {
+                    throw new Throwable("Throwable is returned while getting bundle context");
                 }
-
             };
         }};
         Deencapsulation.invoke(socialAuthenticatorServiceComponent, "activate", mockComponentContext);
