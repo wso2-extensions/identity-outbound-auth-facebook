@@ -22,6 +22,8 @@
             <class name="org.wso2.carbon.identity.application.authenticator.facebook.FacebookAuthenticatorTests"/>
             <class name="org.wso2.carbon.identity.application.authenticator.facebook.TestWithoutMockRequestBuilder"/>
             <class name="org.wso2.carbon.identity.application.authenticator.facebook.FacebookProcessResponseTests"/>
+            <class name="org.wso2.carbon.identity.application.authenticator.facebook.TestAuthnContextWithoutMocking"/>
+            <class name="org.wso2.carbon.identity.application.authenticator.facebook.ServiceComponentTests"/>
         </classes>
     </test>
 

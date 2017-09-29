@@ -25,7 +25,10 @@ public class TestConstants {
     public static final String dummyClientId = "clientIDqwertyuio123456789zxcvbnm";
     public static final String dummyClientSecret = "clientSecretpoiuytrewqlkjhgfdsa09876543";
     public static final String dummyAuthCode = "code67890765432tyuio";
+    public static final String dummyUsername = "testUser";
     public static final String REDIRECT_URI = "redirect_uri";
+    public static final String FIRST_NAME = "first_name";
+    public static final String LAST_NAME = "last_name";
     public static final String queryParamSeparator = "&";
     public static final String queryParamStarter = "?";
     public static final String queryParamValueSeparator = "=";
@@ -34,6 +37,7 @@ public class TestConstants {
     public static final String dummyCommonAuthId = "1234567890";
     public static final String customUserInfoEndpoint = "https://facebook.custom.userinfo.com";
     public static final String customFacebookEndpoint = "https://facebook.custom.com";
+    public static final String customClaimDialect = "http://custom.claim.dialect";
 
     public static final String tokenResponse =
             "{\"access_token\":\"$token\"," +

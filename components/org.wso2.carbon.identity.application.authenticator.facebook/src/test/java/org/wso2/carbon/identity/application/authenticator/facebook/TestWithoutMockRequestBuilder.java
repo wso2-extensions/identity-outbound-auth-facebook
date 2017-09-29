@@ -35,13 +35,17 @@ public class TestWithoutMockRequestBuilder {
 
     @Test
     public void testTokenRequest() throws Exception {
+
         OAuthClientRequest oAuthClientRequest = facebookAuthenticator.buidTokenRequest(TestConstants.facebookTokenEndpoint,
                 TestConstants.dummyClientId, TestConstants.dummyClientSecret, TestConstants.callbackURL, TestConstants.dummyAuthCode);
-        Assert.assertTrue(oAuthClientRequest.getLocationUri().contains("client_secret=" + TestConstants.dummyClientSecret));
-        Assert.assertTrue(oAuthClientRequest.getLocationUri().contains("redirect_uri=" + URLEncoder.encode
-                (TestConstants.callbackURL)));
-        Assert.assertTrue(oAuthClientRequest.getLocationUri().contains("code=" + TestConstants.dummyAuthCode));
-        Assert.assertTrue(oAuthClientRequest.getLocationUri().contains("client_id=" + TestConstants.dummyClientId));
+        Assert.assertTrue(oAuthClientRequest.getLocationUri().contains("client_secret=" + TestConstants
+                .dummyClientSecret), "Client secret does not contain in the token request");
+        Assert.assertTrue(oAuthClientRequest.getLocationUri().contains(TestConstants.REDIRECT_URI + "=" + URLEncoder
+                .encode(TestConstants.callbackURL)), "Redirection URI is not present in the token request");
+        Assert.assertTrue(oAuthClientRequest.getLocationUri().contains("code=" + TestConstants.dummyAuthCode),
+                "Authorization code does not contain in the token request");
+        Assert.assertTrue(oAuthClientRequest.getLocationUri().contains("client_id=" + TestConstants.dummyClientId),
+                "Client ID does not contain in the token request");
     }
 
 }
