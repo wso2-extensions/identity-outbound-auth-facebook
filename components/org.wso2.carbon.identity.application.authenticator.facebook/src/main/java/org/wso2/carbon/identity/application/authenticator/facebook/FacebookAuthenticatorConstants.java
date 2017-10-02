@@ -41,6 +41,7 @@ public class FacebookAuthenticatorConstants {
     public static final String FB_ACCESS_TOKEN = "access_token";
     public static final String CLAIM_DIALECT_URI_PARAMETER = "ClaimDialectUri";
     public static final String PREFIE_CLAIM_DIALECT_URI_PARAMETER = "PrefixClaimDialectUri";
+    public static final String FORWARD_SLASH = "/";
 
     private FacebookAuthenticatorConstants() {
     }

@@ -381,7 +381,8 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
                 }
                 String subjectFromClaims = null;
                 try {
-                    if (StringUtils.isNotBlank(claimConfig.getUserClaimURI()) && getClaimDialectURI() != null ) {
+                    if (StringUtils.isNotBlank(claimConfig.getUserClaimURI()) &&
+                            StringUtils.isNotEmpty(getClaimDialectURI())) {
                         setSubject(context, jsonObject);
                         context.getSubject().setUserAttributes(claims);
                         subjectFromClaims = FrameworkUtils.getFederatedSubjectFromClaims(context, getClaimDialectURI());
@@ -423,16 +424,16 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
     private String getEffectiveClaimUri(String claimDialectUri, String claimUri) {
 
         if (shouldPrefixClaimDialectUri() && StringUtils.isNotBlank(getClaimDialectURI())) {
-            return claimDialectUri + "/" + claimUri;
+            return claimDialectUri + FacebookAuthenticatorConstants.FORWARD_SLASH + claimUri;
         }
         return claimUri;
     }
 
-    public boolean shouldPrefixClaimDialectUri() {
+    protected boolean shouldPrefixClaimDialectUri() {
 
         Map<String, String> parameters = readParametersFromAuthenticatorConfig();
-        return parameters != null && parameters.containsKey(FacebookAuthenticatorConstants
-                .PREFIE_CLAIM_DIALECT_URI_PARAMETER);
+        return parameters != null && Boolean.parseBoolean(parameters.get(
+                        FacebookAuthenticatorConstants.PREFIE_CLAIM_DIALECT_URI_PARAMETER));
     }
 
     @Override
@@ -519,8 +520,7 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
     public String getClaimDialectURI() {
         String claimDialectUri = null;
         Map<String, String> parameters = readParametersFromAuthenticatorConfig();
-        if (parameters != null && parameters.containsKey(FacebookAuthenticatorConstants.
-                CLAIM_DIALECT_URI_PARAMETER)) {
+        if (parameters != null) {
             claimDialectUri = parameters.get(FacebookAuthenticatorConstants.CLAIM_DIALECT_URI_PARAMETER);
         } else {
             if (log.isDebugEnabled()) {
