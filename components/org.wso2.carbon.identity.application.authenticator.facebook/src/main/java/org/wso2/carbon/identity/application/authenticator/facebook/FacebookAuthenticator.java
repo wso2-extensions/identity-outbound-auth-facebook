@@ -68,6 +68,7 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
     private String tokenEndpoint;
     private String oAuthEndpoint;
     private String userInfoEndpoint;
+    private ClaimConfig claimConfig;
 
 
     /**
@@ -216,10 +217,9 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
             String code = getAuthorizationCode(request);
             String token = getToken(tokenEndPoint, clientId, clientSecret, callbackUrl, code);
 
+            claimConfig = getAuthenticatorClaimConfigurations(context);
             if (!StringUtils.isBlank(userInfoFields)) {
-                if (context.getExternalIdP().getIdentityProvider().getClaimConfig() != null && !StringUtils.isBlank
-                        (context.getExternalIdP().getIdentityProvider().getClaimConfig().getUserClaimURI())) {
-                    ClaimConfig claimConfig = getAuthenticatorClaimConfigurations(context);
+                if (!StringUtils.isBlank(claimConfig.getUserClaimURI())) {
                     if (claimConfig == null) {
                         throw new AuthenticationFailedException("Authenticator " + getName() + " returned null when " +
                                 "obtaining claim configurations");
@@ -353,7 +353,6 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
     protected void buildClaims(AuthenticationContext context, Map<String, Object> jsonObject)
             throws ApplicationAuthenticatorException {
 
-        ClaimConfig claimConfig = getAuthenticatorClaimConfigurations(context);
         if (jsonObject != null) {
             Map<ClaimMapping, String> claims = new HashMap<>();
             String claimUri;
@@ -374,41 +373,39 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
                     }
                 }
             }
-            if (claimConfig != null) {
-                if (StringUtils.isBlank(claimConfig.getUserClaimURI())) {
-                    claimConfig.setUserClaimURI(getEffectiveClaimUri(getClaimDialectURI(),
-                            FacebookAuthenticatorConstants.EMAIL));
-                }
-                String subjectFromClaims = null;
-                try {
-                    if (StringUtils.isNotBlank(claimConfig.getUserClaimURI()) &&
-                            StringUtils.isNotEmpty(getClaimDialectURI())) {
-                        setSubject(context, jsonObject);
-                        context.getSubject().setUserAttributes(claims);
-                        subjectFromClaims = FrameworkUtils.getFederatedSubjectFromClaims(context, getClaimDialectURI());
-                    } else {
-                        subjectFromClaims = FrameworkUtils.getFederatedSubjectFromClaims(
-                                context.getExternalIdP().getIdentityProvider(), claims);
-                    }
-                } catch (FrameworkException e) {
-                    if (log.isDebugEnabled()) {
-                        log.debug("Couldn't find the subject claim from claim mappings ", e);
-                    }
-                }
-                if (StringUtils.isNotBlank(subjectFromClaims)) {
-                    if (context.getSubject() == null) {
-                        AuthenticatedUser authenticatedUser =
-                                AuthenticatedUser.createFederateAuthenticatedUserFromSubjectIdentifier(
-                                        subjectFromClaims);
-                        context.setSubject(authenticatedUser);
-                        context.getSubject().setUserAttributes(claims);
-                    } else {
-                        context.getSubject().setAuthenticatedSubjectIdentifier(subjectFromClaims);
-                    }
-                } else {
+            if (StringUtils.isBlank(claimConfig.getUserClaimURI())) {
+                claimConfig.setUserClaimURI(getEffectiveClaimUri(getClaimDialectURI(),
+                        FacebookAuthenticatorConstants.EMAIL));
+            }
+            String subjectFromClaims = null;
+            try {
+                if (StringUtils.isNotBlank(claimConfig.getUserClaimURI()) &&
+                        StringUtils.isNotEmpty(getClaimDialectURI()) && claimConfig.isLocalClaimDialect()) {
                     setSubject(context, jsonObject);
                     context.getSubject().setUserAttributes(claims);
+                    subjectFromClaims = FrameworkUtils.getFederatedSubjectFromClaims(context, getClaimDialectURI());
+                } else {
+                    subjectFromClaims = FrameworkUtils.getFederatedSubjectFromClaims(
+                            context.getExternalIdP().getIdentityProvider(), claims);
                 }
+            } catch (FrameworkException e) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Couldn't find the subject claim from claim mappings ", e);
+                }
+            }
+            if (StringUtils.isNotBlank(subjectFromClaims)) {
+                if (context.getSubject() == null) {
+                    AuthenticatedUser authenticatedUser =
+                            AuthenticatedUser.createFederateAuthenticatedUserFromSubjectIdentifier(
+                                    subjectFromClaims);
+                    context.setSubject(authenticatedUser);
+                    context.getSubject().setUserAttributes(claims);
+                } else {
+                    context.getSubject().setAuthenticatedSubjectIdentifier(subjectFromClaims);
+                }
+            } else {
+                setSubject(context, jsonObject);
+                context.getSubject().setUserAttributes(claims);
             }
         } else {
             if (log.isDebugEnabled()) {
