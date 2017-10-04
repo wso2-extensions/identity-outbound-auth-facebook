@@ -425,6 +425,10 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
         return claimUri;
     }
 
+    /**
+     * This method decide whether to append cliam dialect uri to the claim uri
+     * @return true if appended
+     */
     protected boolean shouldPrefixClaimDialectUri() {
 
         Map<String, String> parameters = readParametersFromAuthenticatorConfig();
@@ -472,6 +476,10 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
         }
     }
 
+    /**
+     * This method reads parameters from application-authentication.xml
+     * @return emptyMap if there is no Parameters else returns map of parameters
+     */
     private Map<String, String> readParametersFromAuthenticatorConfig() {
         AuthenticatorConfig authConfig = FileBasedConfigurationBuilder.getInstance().getAuthenticatorBean(getName());
         if (authConfig != null) {
@@ -485,6 +493,11 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
         }
     }
 
+    /**
+     * This method get idp claim configurations
+     * @param context
+     * @return ClaimConfig
+     */
     private ClaimConfig getAuthenticatorClaimConfigurations(AuthenticationContext context) {
         ClaimConfig claimConfig = null;
         if (context != null) {
