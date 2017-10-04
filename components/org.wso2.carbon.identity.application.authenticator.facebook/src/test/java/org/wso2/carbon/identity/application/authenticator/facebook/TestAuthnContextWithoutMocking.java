@@ -147,6 +147,16 @@ public class TestAuthnContextWithoutMocking {
             Deencapsulation.invoke(mockFBAuthenticator, "getClaimDialectURI");
             result = claimDialect;
         }};
+        new Expectations(mockFBAuthenticator) {{
+            Deencapsulation.invoke(mockFBAuthenticator, "shouldPrefixClaimDialectUri");
+            if (claimDialect == null) {
+                result = false;
+            } else {
+                result = true;
+            }
+        }};
+        Deencapsulation.setField(mockFBAuthenticator, "claimConfig", externalIdPConfig.getIdentityProvider()
+                .getClaimConfig());
         Map<String, Object> jsonMap = new HashMap<>();
         jsonMap.put(FacebookAuthenticatorConstants.DEFAULT_USER_IDENTIFIER, TestConstants.dummyUsername);
         jsonMap.put("someTestKey", null);
