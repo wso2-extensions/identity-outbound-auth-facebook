@@ -30,14 +30,18 @@ import org.wso2.carbon.identity.application.authentication.framework.AbstractApp
 import org.wso2.carbon.identity.application.authentication.framework.FederatedApplicationAuthenticator;
 import org.wso2.carbon.identity.application.authentication.framework.config.builder.FileBasedConfigurationBuilder;
 import org.wso2.carbon.identity.application.authentication.framework.config.model.AuthenticatorConfig;
+import org.wso2.carbon.identity.application.authentication.framework.config.model.ExternalIdPConfig;
 import org.wso2.carbon.identity.application.authentication.framework.context.AuthenticationContext;
 import org.wso2.carbon.identity.application.authentication.framework.exception.ApplicationAuthenticatorException;
 import org.wso2.carbon.identity.application.authentication.framework.exception.AuthenticationFailedException;
+import org.wso2.carbon.identity.application.authentication.framework.exception.FrameworkException;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkUtils;
 import org.wso2.carbon.identity.application.common.model.Claim;
+import org.wso2.carbon.identity.application.common.model.ClaimConfig;
 import org.wso2.carbon.identity.application.common.model.ClaimMapping;
+import org.wso2.carbon.identity.application.common.model.IdentityProvider;
 import org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants;
 import org.wso2.carbon.identity.base.IdentityConstants;
 import org.wso2.carbon.identity.core.util.IdentityIOStreamUtils;
@@ -51,6 +55,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.Charset;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
@@ -64,6 +69,7 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
     private String tokenEndpoint;
     private String oAuthEndpoint;
     private String userInfoEndpoint;
+    private ClaimConfig claimConfig;
 
 
     /**
@@ -212,13 +218,21 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
             String code = getAuthorizationCode(request);
             String token = getToken(tokenEndPoint, clientId, clientSecret, callbackUrl, code);
 
-            if (!StringUtils.isBlank(userInfoFields)) {
-                if (context.getExternalIdP().getIdentityProvider().getClaimConfig() != null && !StringUtils.isBlank
-                        (context.getExternalIdP().getIdentityProvider().getClaimConfig().getUserClaimURI())) {
-                    String userClaimUri = context.getExternalIdP().getIdentityProvider().getClaimConfig()
-                            .getUserClaimURI();
-                    if (!Arrays.asList(userInfoFields.split(",")).contains(userClaimUri)) {
+            claimConfig = getAuthenticatorClaimConfigurations(context);
+            if (claimConfig == null) {
+                throw new AuthenticationFailedException("Authenticator " + getName() + " returned null when " +
+                        "obtaining claim configurations");
+            }
+            if (StringUtils.isNotBlank(userInfoFields)) {
+                String userClaimUri = claimConfig.getUserClaimURI();
+                if (StringUtils.isNotBlank(userClaimUri)) {
+                    if (!Arrays.asList(userInfoFields.split(",")).contains(userClaimUri) && !claimConfig
+                            .isLocalClaimDialect()) {
                         userInfoFields += ("," + userClaimUri);
+                        if (log.isDebugEnabled()) {
+                            log.debug("Adding user claim uri " + userClaimUri + " into the user info fields in " +
+                                    "authenticator");
+                        }
                     }
                 } else {
                     if (!Arrays.asList(userInfoFields.split(",")).contains(FacebookAuthenticatorConstants
@@ -339,24 +353,19 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
 
     protected void buildClaims(AuthenticationContext context, Map<String, Object> jsonObject)
             throws ApplicationAuthenticatorException {
+
         if (jsonObject != null) {
             Map<ClaimMapping, String> claims = new HashMap<>();
             String claimUri;
             Object claimValueObject;
-            String claimDialectUri = getClaimDialectURI();
-            if (claimDialectUri == null) {
-                claimDialectUri = "";
-            } else {
-                claimDialectUri += "/";
-            }
 
             for (Map.Entry<String, Object> userInfo : jsonObject.entrySet()) {
-                claimUri            = userInfo.getKey();
+                claimUri = getEffectiveClaimUri(getClaimDialectURI(), userInfo.getKey());
                 claimValueObject    = userInfo.getValue();
-                claimUri            = claimDialectUri + claimUri;
+
                 if (StringUtils.isNotEmpty(claimUri) && claimValueObject != null && StringUtils.isNotEmpty(
                         claimValueObject.toString())) {
-                    claims.put(buildClaimMapping(claimUri),claimValueObject.toString());
+                    claims.put(buildClaimMapping(claimUri), claimValueObject.toString());
                 } else {
                     if (log.isDebugEnabled()) {
                         log.debug("The key or/and value of user information came from facebook is null or empty " +
@@ -365,30 +374,65 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
                     }
                 }
             }
-
-            if (StringUtils.isBlank(context.getExternalIdP().getIdentityProvider()
-                    .getClaimConfig().getUserClaimURI())) {
-                context.getExternalIdP().getIdentityProvider().getClaimConfig().setUserClaimURI
-                        (FacebookAuthenticatorConstants.EMAIL);
+            if (StringUtils.isBlank(claimConfig.getUserClaimURI())) {
+                claimConfig.setUserClaimURI(getEffectiveClaimUri(getClaimDialectURI(),
+                        FacebookAuthenticatorConstants.EMAIL));
             }
-            String subjectFromClaims = FrameworkUtils.getFederatedSubjectFromClaims(
-                    context.getExternalIdP().getIdentityProvider(), claims);
-            if (subjectFromClaims != null && !subjectFromClaims.isEmpty()) {
-                AuthenticatedUser authenticatedUser =
-                        AuthenticatedUser.createFederateAuthenticatedUserFromSubjectIdentifier(subjectFromClaims);
-                context.setSubject(authenticatedUser);
-            } else {
+            String subjectFromClaims = null;
+            if (StringUtils.isNotBlank(claimConfig.getUserClaimURI()) &&
+                    StringUtils.isNotEmpty(getClaimDialectURI()) && claimConfig.isLocalClaimDialect()) {
                 setSubject(context, jsonObject);
+                context.getSubject().setUserAttributes(claims);
+                try {
+                    subjectFromClaims = FrameworkUtils.getFederatedSubjectFromClaims(context, getClaimDialectURI());
+                    if (StringUtils.isNotBlank(subjectFromClaims)) {
+                            context.getSubject().setAuthenticatedSubjectIdentifier(subjectFromClaims);
+                    }
+                } catch (FrameworkException e) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Couldn't find the subject claim from claim mappings ", e);
+                    }
+                }
+            } else {
+                subjectFromClaims = FrameworkUtils.getFederatedSubjectFromClaims(
+                        context.getExternalIdP().getIdentityProvider(), claims);
+                if (StringUtils.isNotBlank(subjectFromClaims)) {
+                    AuthenticatedUser authenticatedUser =
+                            AuthenticatedUser.createFederateAuthenticatedUserFromSubjectIdentifier(
+                                    subjectFromClaims);
+                    context.setSubject(authenticatedUser);
+                } else {
+                    setSubject(context, jsonObject);
+                }
+                context.getSubject().setUserAttributes(claims);
             }
-
-            context.getSubject().setUserAttributes(claims);
-
         } else {
             if (log.isDebugEnabled()) {
                 log.debug("Decoded json object is null");
             }
             throw new ApplicationAuthenticatorException("Decoded json object is null");
         }
+    }
+
+    /**
+     * Prefix give ClaimDialactUri to given claimUri.
+     */
+    private String getEffectiveClaimUri(String claimDialectUri, String claimUri) {
+
+        if (shouldPrefixClaimDialectUri() && StringUtils.isNotBlank(getClaimDialectURI())) {
+            return claimDialectUri + FacebookAuthenticatorConstants.FORWARD_SLASH + claimUri;
+        }
+        return claimUri;
+    }
+
+    /**
+     * This method decide whether to append cliam dialect uri to the claim uri
+     * @return true if appended
+     */
+    protected boolean shouldPrefixClaimDialectUri() {
+
+        Map<String, String> parameters = readParametersFromAuthenticatorConfig();
+        return Boolean.parseBoolean(parameters.get(FacebookAuthenticatorConstants.PREFIE_CLAIM_DIALECT_URI_PARAMETER));
     }
 
     @Override
@@ -432,26 +476,59 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
         }
     }
 
-    @Override
-    public String getClaimDialectURI() {
-        String claimDialectUri = null;
+    /**
+     * This method reads parameters from application-authentication.xml
+     * @return emptyMap if there is no Parameters else returns map of parameters
+     */
+    private Map<String, String> readParametersFromAuthenticatorConfig() {
         AuthenticatorConfig authConfig = FileBasedConfigurationBuilder.getInstance().getAuthenticatorBean(getName());
         if (authConfig != null) {
-            Map<String, String> parameters = authConfig.getParameterMap();
-            if (parameters != null && parameters.containsKey(FacebookAuthenticatorConstants.
-                    CLAIM_DIALECT_URI_PARAMETER)) {
-                claimDialectUri = parameters.get(FacebookAuthenticatorConstants.CLAIM_DIALECT_URI_PARAMETER);
-            } else {
-                if (log.isDebugEnabled()) {
-                    log.debug("Found no Parameter map for connector " + getName());
-                }
-            }
+            return authConfig.getParameterMap();
         } else {
             if (log.isDebugEnabled()) {
                 log.debug("FileBasedConfigBuilder returned null AuthenticatorConfigs for the connector " +
                         getName());
             }
+            return Collections.emptyMap();
         }
+    }
+
+    /**
+     * This method get idp claim configurations
+     * @param context
+     * @return ClaimConfig
+     */
+    private ClaimConfig getAuthenticatorClaimConfigurations(AuthenticationContext context) {
+        ClaimConfig claimConfig = null;
+        if (context != null) {
+            ExternalIdPConfig externalIdPConfig = context.getExternalIdP();
+            if (externalIdPConfig != null) {
+                IdentityProvider identityProvider = externalIdPConfig.getIdentityProvider();
+                if (identityProvider != null) {
+                    claimConfig = identityProvider.getClaimConfig();
+                } else {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Authenticator " + getName() + " recieved null IdentityProvider");
+                    }
+                }
+            } else {
+                if (log.isDebugEnabled()) {
+                    log.debug("Authenticator " + getName() + " recieved null ExternalIdPConfig");
+                }
+            }
+        } else {
+            if (log.isDebugEnabled()) {
+                log.debug("Authenticator " + getName() + " recieved null AuthenticationContext");
+            }
+        }
+        return claimConfig;
+    }
+
+    @Override
+    public String getClaimDialectURI() {
+        String claimDialectUri = null;
+        Map<String, String> parameters = readParametersFromAuthenticatorConfig();
+        claimDialectUri = parameters.get(FacebookAuthenticatorConstants.CLAIM_DIALECT_URI_PARAMETER);
         if (log.isDebugEnabled()) {
             log.debug("Authenticator " + getName() + " is using the claim dialect uri " + claimDialectUri);
         }
