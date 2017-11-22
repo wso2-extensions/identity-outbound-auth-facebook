@@ -27,7 +27,7 @@
     <groupId>org.wso2.carbon.identity.outbound.auth.facebook</groupId>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>identity-outbound-auth-facebook</artifactId>
-    <version>5.1.11</version>
+    <version>5.1.12-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>WSO2 Carbon - Facebook Authenticator Feature Aggregator Module</name>
     <description>
@@ -39,7 +39,7 @@
         <url>https://github.com/wso2-extensions/identity-outbound-auth-facebook.git</url>
         <developerConnection>scm:git:https://github.com/wso2-extensions/identity-outbound-auth-facebook.git</developerConnection>
         <connection>scm:git:https://github.com/wso2-extensions/identity-outbound-auth-facebook.git</connection>
-        <tag>v5.1.11</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <repositories>
