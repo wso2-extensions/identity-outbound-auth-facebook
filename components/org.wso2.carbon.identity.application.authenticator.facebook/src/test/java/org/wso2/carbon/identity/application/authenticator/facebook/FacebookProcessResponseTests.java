@@ -33,6 +33,7 @@ import org.wso2.carbon.identity.application.authentication.framework.config.mode
 import org.wso2.carbon.identity.application.authentication.framework.context.AuthenticationContext;
 import org.wso2.carbon.identity.application.authentication.framework.exception.ApplicationAuthenticatorException;
 import org.wso2.carbon.identity.application.authentication.framework.exception.AuthenticationFailedException;
+import org.wso2.carbon.identity.application.common.model.ClaimConfig;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 
 import java.io.IOException;
@@ -61,6 +62,8 @@ public class FacebookProcessResponseTests {
     private OAuthAuthzResponse mockAuthzResponse;
     @Mocked
     private FileBasedConfigurationBuilder mockFileBasedConfigBuilder;
+    @Mocked
+    private ClaimConfig mockClaimConfig;
 
     @BeforeMethod
     public void setUp() throws Exception {
@@ -213,7 +216,7 @@ public class FacebookProcessResponseTests {
     public void testBuildClaimsWithNullClaims() throws Exception {
 
         TestUtils.enableDebugLogs(mockedLog, FacebookAuthenticator.class);
-        mockFBAuthenticator.buildClaims(mockAuthenticationContext, null);
+        mockFBAuthenticator.buildClaims(mockAuthenticationContext, null, mockClaimConfig);
     }
 
     private void buildExpectationsForProcessAuthnReq(final String fbURL, final String scope, final String callbackURL) {

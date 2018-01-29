@@ -140,8 +140,9 @@ public class TestAuthnContextWithoutMocking {
         TestUtils.enableDebugLogs(mockedLog, FacebookAuthenticator.class);
         AuthenticationContext authenticationContext = new AuthenticationContext();
         ExternalIdPConfig externalIdPConfig = new ExternalIdPConfig(new IdentityProvider());
-        externalIdPConfig.getIdentityProvider().setClaimConfig(new ClaimConfig());
-        externalIdPConfig.getIdentityProvider().getClaimConfig().setUserClaimURI("http://something");
+        ClaimConfig claimConfig = new ClaimConfig();
+        claimConfig.setUserClaimURI("http://something");
+        externalIdPConfig.getIdentityProvider().setClaimConfig(claimConfig);
         authenticationContext.setExternalIdP(externalIdPConfig);
         new Expectations(mockFBAuthenticator) {{
             Deencapsulation.invoke(mockFBAuthenticator, "getClaimDialectURI");
@@ -155,13 +156,11 @@ public class TestAuthnContextWithoutMocking {
                 result = true;
             }
         }};
-        Deencapsulation.setField(mockFBAuthenticator, "claimConfig", externalIdPConfig.getIdentityProvider()
-                .getClaimConfig());
         Map<String, Object> jsonMap = new HashMap<>();
         jsonMap.put(FacebookAuthenticatorConstants.DEFAULT_USER_IDENTIFIER, TestConstants.dummyUsername);
         jsonMap.put("someTestKey", null);
         jsonMap.put(TestConstants.FIRST_NAME, TestConstants.FIRST_NAME + "_value");
-        mockFBAuthenticator.buildClaims(authenticationContext, jsonMap);
+        mockFBAuthenticator.buildClaims(authenticationContext, jsonMap, claimConfig);
         return authenticationContext;
     }
 

@@ -69,8 +69,6 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
     private String tokenEndpoint;
     private String oAuthEndpoint;
     private String userInfoEndpoint;
-    private ClaimConfig claimConfig;
-
 
     /**
      * Initiate tokenEndpoint
@@ -218,7 +216,7 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
             String code = getAuthorizationCode(request);
             String token = getToken(tokenEndPoint, clientId, clientSecret, callbackUrl, code);
 
-            claimConfig = getAuthenticatorClaimConfigurations(context);
+            ClaimConfig claimConfig = getAuthenticatorClaimConfigurations(context);
             if (claimConfig == null) {
                 throw new AuthenticationFailedException("Authenticator " + getName() + " returned null when " +
                         "obtaining claim configurations");
@@ -243,7 +241,7 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
             }
 
             Map<String, Object> userInfoJson = getUserInfoJson(fbAuthUserInfoUrl, userInfoFields, token);
-            buildClaims(context, userInfoJson);
+            buildClaims(context, userInfoJson, claimConfig);
         } catch (ApplicationAuthenticatorException e) {
             log.error("Failed to process Facebook Connect response.", e);
             throw new AuthenticationFailedException(e.getMessage(), context.getSubject(), e);
@@ -352,6 +350,13 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
     }
 
     protected void buildClaims(AuthenticationContext context, Map<String, Object> jsonObject)
+            throws ApplicationAuthenticatorException {
+
+        ClaimConfig claimConfig = getAuthenticatorClaimConfigurations(context);
+        buildClaims(context, jsonObject, claimConfig);
+    }
+
+    protected void buildClaims(AuthenticationContext context, Map<String, Object> jsonObject, ClaimConfig claimConfig)
             throws ApplicationAuthenticatorException {
 
         if (jsonObject != null) {
