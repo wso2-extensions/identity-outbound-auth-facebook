@@ -35,6 +35,7 @@ import org.wso2.carbon.identity.application.authentication.framework.context.Aut
 import org.wso2.carbon.identity.application.authentication.framework.exception.ApplicationAuthenticatorException;
 import org.wso2.carbon.identity.application.authentication.framework.exception.AuthenticationFailedException;
 import org.wso2.carbon.identity.application.authentication.framework.exception.FrameworkException;
+import org.wso2.carbon.identity.application.authentication.framework.exception.InvalidCredentialsException;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkUtils;
@@ -141,12 +142,9 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
 
         log.trace("Inside FacebookAuthenticator.canHandle()");
 
-        if (request.getParameter(FacebookAuthenticatorConstants.OAUTH2_GRANT_TYPE_CODE) != null &&
-                request.getParameter(FacebookAuthenticatorConstants.OAUTH2_PARAM_STATE) != null &&
-                FacebookAuthenticatorConstants.FACEBOOK_LOGIN_TYPE.equals(getLoginType(request))) {
+        if (isFacebookStateParamExists(request) && (isOauth2CodeParamExists(request) || isErrorParamExists(request))) {
             return true;
         }
-
         return false;
     }
 
@@ -197,6 +195,8 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
             throws AuthenticationFailedException {
 
         log.trace("Inside FacebookAuthenticator.authenticate()");
+
+        handleErrorResponse(request, response, context);
 
         try {
             Map<String, String> authenticatorProperties = context.getAuthenticatorProperties();
@@ -527,6 +527,38 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
             }
         }
         return claimConfig;
+    }
+
+    private void handleErrorResponse(HttpServletRequest request, HttpServletResponse response,
+                                     AuthenticationContext context)
+            throws InvalidCredentialsException {
+        if (isErrorParamExists(request)) {
+            StringBuilder errorMessage = new StringBuilder();
+            String error_code = request.getParameter(FacebookAuthenticatorConstants.OAUTH2_PARAM_ERROR_CODE);
+            String error = request.getParameter(FacebookAuthenticatorConstants.OAUTH2_PARAM_ERROR);
+            String error_description = request.getParameter(FacebookAuthenticatorConstants.OAUTH2_PARAM_ERROR_DESCRIPTION);
+            String error_reason = request.getParameter(FacebookAuthenticatorConstants.OAUTH2_PARAM_ERROR_REASON);
+            errorMessage.append("error_code: ").append(error_code).append(", error: ").append(error)
+                    .append(", error_description: ").append(error_description)
+                    .append(", error_reason: ").append(error_reason);
+            if (log.isDebugEnabled()) {
+                log.debug("Failed to authenticate via Facebook. " + errorMessage.toString());
+            }
+            throw new InvalidCredentialsException(errorMessage.toString());
+        }
+    }
+
+    private boolean isErrorParamExists(HttpServletRequest request) {
+        return request.getParameter(FacebookAuthenticatorConstants.OAUTH2_PARAM_ERROR) != null;
+    }
+
+    private boolean isOauth2CodeParamExists(HttpServletRequest request) {
+        return request.getParameter(FacebookAuthenticatorConstants.OAUTH2_GRANT_TYPE_CODE) != null;
+    }
+
+    private boolean isFacebookStateParamExists(HttpServletRequest request) {
+        return request.getParameter(FacebookAuthenticatorConstants.OAUTH2_PARAM_STATE) != null &&
+                FacebookAuthenticatorConstants.FACEBOOK_LOGIN_TYPE.equals(getLoginType(request));
     }
 
     @Override

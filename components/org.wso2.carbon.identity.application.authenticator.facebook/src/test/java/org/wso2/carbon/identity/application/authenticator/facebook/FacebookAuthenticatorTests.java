@@ -115,8 +115,6 @@ public class FacebookAuthenticatorTests {
             { /* define in static block */
                 mockHttpServletRequest.getParameter(FacebookAuthenticatorConstants.OAUTH2_PARAM_STATE);
                 result = null;
-                mockHttpServletRequest.getParameter(FacebookAuthenticatorConstants.OAUTH2_GRANT_TYPE_CODE);
-                result = "Authorization";
             }
         };
         Assert.assertEquals(facebookAuthenticator.canHandle(mockHttpServletRequest), false);
@@ -125,8 +123,17 @@ public class FacebookAuthenticatorTests {
             { /* define in static block */
                 mockHttpServletRequest.getParameter(FacebookAuthenticatorConstants.OAUTH2_PARAM_STATE);
                 result = TestConstants.dummyCommonAuthId + ",nothing";
+            }
+        };
+        Assert.assertEquals(facebookAuthenticator.canHandle(mockHttpServletRequest), false);
+        new Expectations() {
+            { /* define in static block */
+                mockHttpServletRequest.getParameter(FacebookAuthenticatorConstants.OAUTH2_PARAM_STATE);
+                result = TestConstants.dummyCommonAuthId + ",facebook";
+                mockHttpServletRequest.getParameter(FacebookAuthenticatorConstants.OAUTH2_PARAM_ERROR);
+                result = null;
                 mockHttpServletRequest.getParameter(FacebookAuthenticatorConstants.OAUTH2_GRANT_TYPE_CODE);
-                result = "someString";
+                result = null;
             }
         };
         Assert.assertEquals(facebookAuthenticator.canHandle(mockHttpServletRequest), false);

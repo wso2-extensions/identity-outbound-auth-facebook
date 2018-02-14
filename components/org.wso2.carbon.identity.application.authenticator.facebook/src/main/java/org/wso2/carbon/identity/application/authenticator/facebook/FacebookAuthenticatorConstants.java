@@ -25,6 +25,10 @@ public class FacebookAuthenticatorConstants {
 
     public static final String OAUTH2_GRANT_TYPE_CODE = "code";
     public static final String OAUTH2_PARAM_STATE = "state";
+    public static final String OAUTH2_PARAM_ERROR = "error";
+    public static final String OAUTH2_PARAM_ERROR_CODE = "error_code";
+    public static final String OAUTH2_PARAM_ERROR_DESCRIPTION = "error_description";
+    public static final String OAUTH2_PARAM_ERROR_REASON = "error_reason";
     public static final String EMAIL = "email";
 
     public static final String SCOPE = "Scope";
