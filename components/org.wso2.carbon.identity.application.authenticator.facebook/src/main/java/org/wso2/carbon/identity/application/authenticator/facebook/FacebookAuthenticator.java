@@ -474,7 +474,7 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
 
     protected String getLoginType(HttpServletRequest request) {
         String state = request.getParameter(FacebookAuthenticatorConstants.OAUTH2_PARAM_STATE);
-        if (state != null) {
+        if (StringUtils.isNotBlank(state) && state.split(",").length > 1) {
             return state.split(",")[1];
         } else {
             return null;
