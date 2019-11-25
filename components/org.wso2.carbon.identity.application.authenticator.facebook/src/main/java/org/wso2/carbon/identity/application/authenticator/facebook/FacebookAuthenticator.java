@@ -43,6 +43,7 @@ import org.wso2.carbon.identity.application.common.model.Claim;
 import org.wso2.carbon.identity.application.common.model.ClaimConfig;
 import org.wso2.carbon.identity.application.common.model.ClaimMapping;
 import org.wso2.carbon.identity.application.common.model.IdentityProvider;
+import org.wso2.carbon.identity.application.common.model.Property;
 import org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants;
 import org.wso2.carbon.identity.base.IdentityConstants;
 import org.wso2.carbon.identity.core.util.IdentityIOStreamUtils;
@@ -55,9 +56,11 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -592,5 +595,61 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
     @Override
     public String getName() {
         return FacebookAuthenticatorConstants.AUTHENTICATOR_NAME;
+    }
+
+    /**
+     * Get Configuration Properties.
+     */
+    @Override
+    public List<Property> getConfigurationProperties() {
+
+        List<Property> configProperties = new ArrayList<>();
+        Property clientId = new Property();
+        clientId.setName(IdentityApplicationConstants.Authenticator.Facebook.CLIENT_ID);
+        clientId.setDisplayName("Client Id");
+        clientId.setRequired(true);
+        clientId.setDescription("Enter Facebook client identifier value");
+        clientId.setType("string");
+        clientId.setDisplayOrder(1);
+        configProperties.add(clientId);
+
+        Property clientSecret = new Property();
+        clientSecret.setName(IdentityApplicationConstants.Authenticator.Facebook.CLIENT_SECRET);
+        clientSecret.setDisplayName("Client Secret");
+        clientSecret.setRequired(true);
+        clientSecret.setDescription("Enter Facebook client secret value");
+        clientSecret.setType("string");
+        clientSecret.setDisplayOrder(2);
+        configProperties.add(clientSecret);
+
+        Property scope = new Property();
+        scope.setName(IdentityApplicationConstants.Authenticator.Facebook.SCOPE);
+        scope.setDisplayName("Scope");
+        scope.setRequired(false);
+        scope.setDescription("Enter a comma separated list of permissions to request from the user");
+        scope.setType("string");
+        scope.setDefaultValue("email");
+        scope.setDisplayOrder(3);
+        configProperties.add(scope);
+
+        Property userInfoFields = new Property();
+        userInfoFields.setName(IdentityApplicationConstants.Authenticator.Facebook.USER_INFO_FIELDS);
+        userInfoFields.setDisplayName("User Information Fields");
+        userInfoFields.setRequired(false);
+        userInfoFields.setDescription("Enter comma-separated user information fields you want to retrieve");
+        userInfoFields.setType("string");
+        userInfoFields.setDisplayOrder(4);
+        configProperties.add(userInfoFields);
+
+        Property callbackUrl = new Property();
+        callbackUrl.setName(IdentityApplicationConstants.Authenticator.Facebook.CALLBACK_URL);
+        callbackUrl.setDisplayName("Callback Url");
+        callbackUrl.setRequired(false);
+        callbackUrl.setDescription("Enter value corresponding to callback url");
+        callbackUrl.setType("string");
+        callbackUrl.setDisplayOrder(5);
+        configProperties.add(callbackUrl);
+
+        return configProperties;
     }
 }
