@@ -620,6 +620,7 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
         clientSecret.setDescription("Enter Facebook client secret value");
         clientSecret.setType("string");
         clientSecret.setDisplayOrder(2);
+        clientSecret.setConfidential(true);
         configProperties.add(clientSecret);
 
         Property scope = new Property();
