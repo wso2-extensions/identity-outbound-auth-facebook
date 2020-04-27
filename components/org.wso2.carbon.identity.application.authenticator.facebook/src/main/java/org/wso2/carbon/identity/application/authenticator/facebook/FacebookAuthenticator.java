@@ -651,6 +651,33 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
         callbackUrl.setDisplayOrder(5);
         configProperties.add(callbackUrl);
 
+        Property userInfoEndpoint = new Property();
+        userInfoEndpoint.setName(IdentityApplicationConstants.Authenticator.Facebook.USER_INFO_ENDPOINT);
+        userInfoEndpoint.setDisplayName(null);
+        userInfoEndpoint.setRequired(false);
+        userInfoEndpoint.setDescription(null);
+        userInfoEndpoint.setType("string");
+        userInfoEndpoint.setDisplayOrder(0);
+        configProperties.add(userInfoEndpoint);
+
+        Property authTokenEndpoint = new Property();
+        authTokenEndpoint.setName(IdentityApplicationConstants.Authenticator.Facebook.AUTH_TOKEN_ENDPOINT);
+        authTokenEndpoint.setDisplayName(null);
+        authTokenEndpoint.setRequired(false);
+        authTokenEndpoint.setDescription(null);
+        authTokenEndpoint.setType("string");
+        authTokenEndpoint.setDisplayOrder(0);
+        configProperties.add(authTokenEndpoint);
+
+        Property authnEndpoint = new Property();
+        authnEndpoint.setName(IdentityApplicationConstants.Authenticator.Facebook.AUTH_ENDPOINT);
+        authnEndpoint.setDisplayName(null);
+        authnEndpoint.setRequired(false);
+        authTokenEndpoint.setDescription(null);
+        authnEndpoint.setType("string");
+        authnEndpoint.setDisplayOrder(0);
+        configProperties.add(authnEndpoint);
+
         return configProperties;
     }
 }
