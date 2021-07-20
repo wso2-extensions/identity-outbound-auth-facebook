@@ -70,7 +70,6 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
 
     private static final long serialVersionUID = -4844100162196896194L;
     private static final Log log = LogFactory.getLog(FacebookAuthenticator.class);
-    private static final Log diagnosticLog = LogFactory.getLog("diagnostics");
     private String tokenEndpoint;
     private String oAuthEndpoint;
     private String userInfoEndpoint;
@@ -147,7 +146,6 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
         log.trace("Inside FacebookAuthenticator.canHandle()");
 
         if (isFacebookStateParamExists(request) && (isOauth2CodeParamExists(request) || isErrorParamExists(request))) {
-            diagnosticLog.info("FacebookAuthenticator can handle the request.");
             return true;
         }
         return false;
@@ -185,12 +183,9 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
             response.sendRedirect(authzRequest.getLocationUri());
         } catch (IOException e) {
             log.error("Exception while sending to the login page.", e);
-            diagnosticLog.error("Error while redirecting to Facebook login page. Error message: " + e.getMessage());
             throw new AuthenticationFailedException(e.getMessage(), e);
         } catch (OAuthSystemException e) {
             log.error("Exception while building authorization code request.", e);
-            diagnosticLog.error("Error while building the authorization code request. Error message: " +
-                    e.getMessage());
             throw new AuthenticationFailedException(e.getMessage(), e);
         }
         return;
@@ -203,7 +198,6 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
             throws AuthenticationFailedException {
 
         log.trace("Inside FacebookAuthenticator.authenticate()");
-        diagnosticLog.info("Processing the authentication response from Facebook.");
 
         handleErrorResponse(request, response, context);
 
@@ -227,7 +221,6 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
 
             ClaimConfig claimConfig = getAuthenticatorClaimConfigurations(context);
             if (claimConfig == null) {
-                diagnosticLog.error("Facebook authenticator claim configuration is null.");
                 throw new AuthenticationFailedException("Authenticator " + getName() + " returned null when " +
                         "obtaining claim configurations");
             }
@@ -254,7 +247,6 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
             buildClaims(context, userInfoJson, claimConfig);
         } catch (ApplicationAuthenticatorException e) {
             log.error("Failed to process Facebook Connect response.", e);
-            diagnosticLog.error("Failed to process Facebook Connect response. Error message: " + e.getMessage());
             throw new AuthenticationFailedException(e.getMessage(), context.getSubject(), e);
         }
     }
@@ -265,8 +257,6 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
             authzResponse = OAuthAuthzResponse.oauthCodeAuthzResponse(request);
             return authzResponse.getCode();
         } catch (OAuthProblemException e) {
-            diagnosticLog.error("Error while extracting authorization code from response. Error message: " +
-                    e.getMessage());
             throw new ApplicationAuthenticatorException("Exception while reading authorization code.", e);
         }
     }
@@ -284,21 +274,16 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
             token = (String) jsonObject.get(FacebookAuthenticatorConstants.FB_ACCESS_TOKEN);
 
             if (StringUtils.isEmpty(token)) {
-                diagnosticLog.error("Could not find a valid access token from Facebook token endpoint response.");
                 throw new ApplicationAuthenticatorException("Could not receive a valid access token from FB");
             }
         } catch (MalformedURLException e) {
             if (log.isDebugEnabled()) {
                 log.debug("URL : " + tokenRequest.getLocationUri());
             }
-            diagnosticLog.error("MalformedURLException while sending access token request. Error message: " +
-                    e.getMessage());
             throw new ApplicationAuthenticatorException(
                     "MalformedURLException while sending access token request.",
                     e);
         } catch (IOException e) {
-            diagnosticLog.error("Communication exception occurred while sending access token request to Facebook." +
-                    "Error message: " + e.getMessage());
             throw new ApplicationAuthenticatorException("IOException while sending access token request.", e);
         }
         return token;
@@ -315,7 +300,6 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
                             .setRedirectURI(callbackurl).setCode(code)
                             .buildQueryMessage();
         } catch (OAuthSystemException e) {
-            diagnosticLog.error("Exception while building access token request. Error message: " + e.getMessage());
             throw new ApplicationAuthenticatorException("Exception while building access token request.", e);
         }
         return tokenRequest;
@@ -335,14 +319,10 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
             if (log.isDebugEnabled()) {
                 log.debug("URL : " + fbAuthUserInfoUrl, e);
             }
-            diagnosticLog.error("MalformedURLException while sending user information request. Error message: " +
-                    e.getMessage());
             throw new ApplicationAuthenticatorException(
                     "MalformedURLException while sending user information request.",
                     e);
         } catch (IOException e) {
-            diagnosticLog.error("Communication exception occurred while sending user information request to " +
-                    "Facebook. Error message: " + e.getMessage());
             throw new ApplicationAuthenticatorException(
                     "IOException while sending sending user information request.",
                     e);
@@ -354,10 +334,7 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
             throws ApplicationAuthenticatorException {
         String authenticatedUserId = (String) jsonObject.get(FacebookAuthenticatorConstants.DEFAULT_USER_IDENTIFIER);
         if (StringUtils.isEmpty(authenticatedUserId)) {
-            diagnosticLog.error("Authenticated user identifier is empty for claim URI: " +
-                    FacebookAuthenticatorConstants.DEFAULT_USER_IDENTIFIER);
-            throw new ApplicationAuthenticatorException("Authenticated user identifier is empty for the claim URI: " +
-                    FacebookAuthenticatorConstants.DEFAULT_USER_IDENTIFIER);
+            throw new ApplicationAuthenticatorException("Authenticated user identifier is empty");
         }
         AuthenticatedUser authenticatedUser =
                 AuthenticatedUser.createFederateAuthenticatedUserFromSubjectIdentifier(authenticatedUserId);
@@ -423,8 +400,6 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
                     if (log.isDebugEnabled()) {
                         log.debug("Couldn't find the subject claim from claim mappings ", e);
                     }
-                    diagnosticLog.error("Couldn't find the subject claim from claim mappings. Error message: " +
-                            e.getMessage());
                 }
             } else {
                 subjectFromClaims = FrameworkUtils.getFederatedSubjectFromClaims(
@@ -443,7 +418,6 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
             if (log.isDebugEnabled()) {
                 log.debug("Decoded json object is null");
             }
-            diagnosticLog.error("Unable to build claims. JSON response is null.");
             throw new ApplicationAuthenticatorException("Decoded json object is null");
         }
     }
@@ -482,7 +456,6 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
 
     protected String sendRequest(String url) throws IOException {
 
-        diagnosticLog.info("Sending request to URL: " + url);
         BufferedReader in = null;
         StringBuilder b = new StringBuilder();
 
@@ -499,7 +472,6 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
             IdentityIOStreamUtils.closeReader(in);
         }
 
-        diagnosticLog.info("Response: " + b.toString());
         return b.toString();
     }
 
@@ -575,7 +547,6 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
             if (log.isDebugEnabled()) {
                 log.debug("Failed to authenticate via Facebook. " + errorMessage.toString());
             }
-            diagnosticLog.error("Failed to authenticate via Facebook. Error message: " + errorMessage.toString());
             throw new InvalidCredentialsException(errorMessage.toString());
         }
     }
@@ -601,7 +572,6 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
         if (log.isDebugEnabled()) {
             log.debug("Authenticator " + getName() + " is using the claim dialect uri " + claimDialectUri);
         }
-        diagnosticLog.info("Authenticator: " + getName() + " is using the claim dialect uri " + claimDialectUri);
         return claimDialectUri;
     }
 
