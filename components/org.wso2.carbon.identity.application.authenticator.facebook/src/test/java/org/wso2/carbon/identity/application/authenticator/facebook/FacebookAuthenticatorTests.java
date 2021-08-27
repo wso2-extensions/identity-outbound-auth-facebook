@@ -236,7 +236,7 @@ public class FacebookAuthenticatorTests {
     public void testAuthenticatorNames() {
         Assert.assertEquals(facebookAuthenticator.getName(), FacebookAuthenticatorConstants.AUTHENTICATOR_NAME, "FB " +
                 "Authenticator did not return expected name");
-        Assert.assertEquals(facebookAuthenticator.getFriendlyName(), "facebook", "FB authenticator did not return " +
+        Assert.assertEquals(facebookAuthenticator.getFriendlyName(), "Facebook", "FB authenticator did not return " +
                 "expected friendly name");
     }
 
