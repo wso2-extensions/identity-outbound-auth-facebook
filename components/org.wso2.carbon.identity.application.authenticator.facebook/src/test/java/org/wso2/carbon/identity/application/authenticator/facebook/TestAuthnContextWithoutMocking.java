@@ -33,9 +33,17 @@ import org.wso2.carbon.identity.application.authentication.framework.util.Framew
 import org.wso2.carbon.identity.application.common.model.ClaimConfig;
 import org.wso2.carbon.identity.application.common.model.ClaimMapping;
 import org.wso2.carbon.identity.application.common.model.IdentityProvider;
+import org.wso2.carbon.identity.central.log.mgt.utils.LogConstants;
+import org.wso2.carbon.identity.central.log.mgt.utils.LoggerUtils;
+import org.wso2.carbon.utils.DiagnosticLog;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import static org.wso2.carbon.identity.application.authenticator.facebook.FacebookAuthenticatorConstants.LogConstants.ActionIDs.PROCESS_AUTHENTICATION_RESPONSE;
+import static org.wso2.carbon.identity.application.authenticator.facebook.FacebookAuthenticatorConstants.LogConstants.DIAGNOSTIC_LOG_KEY_NAME;
+import static org.wso2.carbon.identity.application.authenticator.facebook.FacebookAuthenticatorConstants.LogConstants.OUTBOUND_AUTH_FACEBOOK_SERVICE;
+import static org.wso2.carbon.identity.application.authenticator.facebook.TestUtils.mockLoggerUtils;
 
 public class TestAuthnContextWithoutMocking {
 
@@ -46,6 +54,8 @@ public class TestAuthnContextWithoutMocking {
     private ExternalIdPConfig externalIdPConfig;
     @Tested
     private FacebookAuthenticator mockFBAuthenticator;
+    @Mocked
+    private LoggerUtils mockLoggerUtils;
     @Mocked
     FrameworkUtils mockFrameworkUtils;
 
@@ -107,6 +117,7 @@ public class TestAuthnContextWithoutMocking {
     @Test
     public void testBuildClaimWithoutCustomDialect() throws Exception {
 
+        mockLoggerUtils(mockLoggerUtils);
         boolean usernameFound = false;
         boolean firstNameFound = false;
         AuthenticationContext authenticationContext = buildClaims(null);
@@ -139,6 +150,7 @@ public class TestAuthnContextWithoutMocking {
 
         TestUtils.enableDebugLogs(mockedLog, FacebookAuthenticator.class);
         AuthenticationContext authenticationContext = new AuthenticationContext();
+        addDiagnosticLogBuilderToAuthContext(authenticationContext);
         ExternalIdPConfig externalIdPConfig = new ExternalIdPConfig(new IdentityProvider());
         ClaimConfig claimConfig = new ClaimConfig();
         claimConfig.setUserClaimURI("http://something");
@@ -162,6 +174,15 @@ public class TestAuthnContextWithoutMocking {
         jsonMap.put(TestConstants.FIRST_NAME, TestConstants.FIRST_NAME + "_value");
         mockFBAuthenticator.buildClaims(authenticationContext, jsonMap, claimConfig);
         return authenticationContext;
+    }
+
+    private void addDiagnosticLogBuilderToAuthContext(AuthenticationContext authenticationContext) {
+
+        DiagnosticLog.DiagnosticLogBuilder diagnosticLogBuilder = new DiagnosticLog.DiagnosticLogBuilder(
+                    OUTBOUND_AUTH_FACEBOOK_SERVICE, PROCESS_AUTHENTICATION_RESPONSE);
+            diagnosticLogBuilder.inputParam(LogConstants.InputKeys.STEP, authenticationContext.getCurrentStep())
+                    .logDetailLevel(DiagnosticLog.LogDetailLevel.APPLICATION);
+        authenticationContext.setProperty(DIAGNOSTIC_LOG_KEY_NAME, diagnosticLogBuilder);
     }
 
 }

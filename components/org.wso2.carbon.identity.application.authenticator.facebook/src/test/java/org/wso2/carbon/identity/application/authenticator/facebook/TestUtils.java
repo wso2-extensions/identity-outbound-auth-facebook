@@ -20,6 +20,7 @@ package org.wso2.carbon.identity.application.authenticator.facebook;
 
 import mockit.Expectations;
 import org.apache.commons.logging.Log;
+import org.wso2.carbon.identity.central.log.mgt.utils.LoggerUtils;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -39,5 +40,17 @@ public class TestUtils {
         modifiersField.setAccessible(true);
         modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
         field.set(null, mockedLog);
+    }
+
+    public static void mockLoggerUtils(LoggerUtils mockLoggerUtils) {
+
+        new Expectations(LoggerUtils.class) {{
+            mockLoggerUtils.isDiagnosticLogsEnabled();
+            result = true;
+        }};
+        new Expectations(LoggerUtils.class) {{
+            mockLoggerUtils.triggerDiagnosticLogEvent(withNotNull());
+            minTimes = 0;
+        }};
     }
 }
