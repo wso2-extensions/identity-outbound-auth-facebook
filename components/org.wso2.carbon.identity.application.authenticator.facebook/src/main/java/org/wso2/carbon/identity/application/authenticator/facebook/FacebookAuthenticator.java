@@ -174,12 +174,12 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
         if (LoggerUtils.isDiagnosticLogsEnabled()) {
             DiagnosticLog.DiagnosticLogBuilder diagnosticLogBuilder = new DiagnosticLog.DiagnosticLogBuilder(
                     OUTBOUND_AUTH_FACEBOOK_SERVICE, INITIATE_OUTBOUND_AUTH_REQUEST);
-            diagnosticLogBuilder.resultMessage("Initiate outbound Facebook authentication request.")
-                    .logDetailLevel(DiagnosticLog.LogDetailLevel.APPLICATION)
+            diagnosticLogBuilder.logDetailLevel(DiagnosticLog.LogDetailLevel.APPLICATION)
                     .resultStatus(DiagnosticLog.ResultStatus.SUCCESS)
                     .inputParam(LogConstants.InputKeys.STEP, context.getCurrentStep())
                     .inputParam(LogConstants.InputKeys.IDP, context.getExternalIdP().getIdPName())
-                    .inputParams(getApplicationDetails(context));
+                    .inputParams(getApplicationDetails(context))
+                    .resultMessage("Initiate outbound Facebook authentication request.");
             LoggerUtils.triggerDiagnosticLogEvent(diagnosticLogBuilder);
         }
         try {
@@ -240,12 +240,12 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
         if (LoggerUtils.isDiagnosticLogsEnabled()) {
             DiagnosticLog.DiagnosticLogBuilder diagnosticLogBuilder = new DiagnosticLog.DiagnosticLogBuilder(
                     OUTBOUND_AUTH_FACEBOOK_SERVICE, PROCESS_AUTHENTICATION_RESPONSE);
-            diagnosticLogBuilder.resultMessage("Processing outbound Facebook authentication response.")
-                    .logDetailLevel(DiagnosticLog.LogDetailLevel.APPLICATION)
+            diagnosticLogBuilder.logDetailLevel(DiagnosticLog.LogDetailLevel.APPLICATION)
                     .resultStatus(DiagnosticLog.ResultStatus.SUCCESS)
                     .inputParam(LogConstants.InputKeys.STEP, context.getCurrentStep())
                     .inputParam(LogConstants.InputKeys.IDP, context.getExternalIdP().getIdPName())
-                    .inputParams(getApplicationDetails(context));
+                    .inputParams(getApplicationDetails(context))
+                    .resultMessage("Processing outbound Facebook authentication response.");
             LoggerUtils.triggerDiagnosticLogEvent(diagnosticLogBuilder);
         }
 
@@ -296,9 +296,9 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
             if (LoggerUtils.isDiagnosticLogsEnabled()) {
                 diagnosticLogBuilder = new DiagnosticLog.DiagnosticLogBuilder(
                         OUTBOUND_AUTH_FACEBOOK_SERVICE, PROCESS_AUTHENTICATION_RESPONSE);
-                diagnosticLogBuilder.inputParam(LogConstants.InputKeys.STEP, context.getCurrentStep())
-                        .inputParams(getApplicationDetails(context))
-                        .logDetailLevel(DiagnosticLog.LogDetailLevel.APPLICATION);
+                diagnosticLogBuilder.logDetailLevel(DiagnosticLog.LogDetailLevel.APPLICATION)
+                        .inputParam(LogConstants.InputKeys.STEP, context.getCurrentStep())
+                        .inputParams(getApplicationDetails(context));
                 context.setProperty(DIAGNOSTIC_LOG_KEY_NAME, diagnosticLogBuilder);
             }
             Map<String, Object> userInfoJson = getUserInfoJson(fbAuthUserInfoUrl, userInfoFields, token);
