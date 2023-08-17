@@ -33,6 +33,7 @@ import org.wso2.carbon.identity.application.authentication.framework.context.Aut
 import org.wso2.carbon.identity.application.authentication.framework.exception.ApplicationAuthenticatorException;
 import org.wso2.carbon.identity.application.authentication.framework.exception.AuthenticationFailedException;
 import org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants;
+import org.wso2.carbon.identity.central.log.mgt.utils.LoggerUtils;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 
 import java.io.IOException;
@@ -40,6 +41,8 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import static org.wso2.carbon.identity.application.authenticator.facebook.TestUtils.mockLoggerUtils;
 
 public class FacebookAuthenticatorTests {
 
@@ -57,6 +60,8 @@ public class FacebookAuthenticatorTests {
     private IdentityUtil mockIdentityUtil;
     @Mocked
     private OAuthClientRequest.TokenRequestBuilder mockTokenRequestBuilder;
+    @Mocked
+    private LoggerUtils mockLoggerUtils;
 
     @BeforeMethod
     public void setUp() throws Exception {
@@ -255,6 +260,7 @@ public class FacebookAuthenticatorTests {
     @Test
     public void testInitiateAuthRequest() throws Exception {
 
+        mockLoggerUtils(mockLoggerUtils);
         final String[] redirectedUrl = new String[1];
         buildExpectationsForInitiateReq(TestConstants.customFacebookEndpoint, "profile", TestConstants.callbackURL);
         new Expectations() {{
@@ -280,6 +286,7 @@ public class FacebookAuthenticatorTests {
     @Test(expectedExceptions = AuthenticationFailedException.class)
     public void testInitAuthReqWithOAuthSystemException() throws Exception {
 
+        mockLoggerUtils(mockLoggerUtils);
         buildExpectationsForInitiateReq(TestConstants.customFacebookEndpoint, "profile", TestConstants.callbackURL);
         new Expectations() {{
             mockHttpServletResponse.sendRedirect(anyString);
@@ -296,6 +303,7 @@ public class FacebookAuthenticatorTests {
     @Test(expectedExceptions = AuthenticationFailedException.class)
     public void testInitiateAuthReqWithIOException() throws Exception {
 
+        mockLoggerUtils(mockLoggerUtils);
         buildExpectationsForInitiateReq(TestConstants.customFacebookEndpoint, "profile", TestConstants.callbackURL);
         new Expectations() {{
             mockHttpServletResponse.sendRedirect(anyString);

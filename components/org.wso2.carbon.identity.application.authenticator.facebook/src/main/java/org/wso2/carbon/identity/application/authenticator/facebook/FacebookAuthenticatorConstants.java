@@ -47,6 +47,24 @@ public class FacebookAuthenticatorConstants {
     public static final String PREFIE_CLAIM_DIALECT_URI_PARAMETER = "PrefixClaimDialectUri";
     public static final String FORWARD_SLASH = "/";
 
+    /**
+     * Constants related to log management.
+     */
+    public static class LogConstants {
+
+        public static final String OUTBOUND_AUTH_FACEBOOK_SERVICE = "outbound-auth-facebook";
+        public static final String DIAGNOSTIC_LOG_KEY_NAME = "diagnosticLog";
+
+        /**
+         * Define action IDs for diagnostic logs.
+         */
+        public static class ActionIDs {
+
+            public static final String PROCESS_AUTHENTICATION_RESPONSE = "process-outbound-auth-facebook-response";
+            public static final String INITIATE_OUTBOUND_AUTH_REQUEST = "initiate-outbound-auth-facebook-request";
+        }
+    }
+
     private FacebookAuthenticatorConstants() {
     }
 }

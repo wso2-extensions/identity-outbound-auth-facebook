@@ -46,8 +46,11 @@ import org.wso2.carbon.identity.application.common.model.IdentityProvider;
 import org.wso2.carbon.identity.application.common.model.Property;
 import org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants;
 import org.wso2.carbon.identity.base.IdentityConstants;
+import org.wso2.carbon.identity.central.log.mgt.utils.LogConstants;
+import org.wso2.carbon.identity.central.log.mgt.utils.LoggerUtils;
 import org.wso2.carbon.identity.core.util.IdentityIOStreamUtils;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
+import org.wso2.carbon.utils.DiagnosticLog;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -62,8 +65,14 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import static org.wso2.carbon.identity.application.authenticator.facebook.FacebookAuthenticatorConstants.LogConstants.ActionIDs.PROCESS_AUTHENTICATION_RESPONSE;
+import static org.wso2.carbon.identity.application.authenticator.facebook.FacebookAuthenticatorConstants.LogConstants.ActionIDs.INITIATE_OUTBOUND_AUTH_REQUEST;
+import static org.wso2.carbon.identity.application.authenticator.facebook.FacebookAuthenticatorConstants.LogConstants.DIAGNOSTIC_LOG_KEY_NAME;
+import static org.wso2.carbon.identity.application.authenticator.facebook.FacebookAuthenticatorConstants.LogConstants.OUTBOUND_AUTH_FACEBOOK_SERVICE;
 
 public class FacebookAuthenticator extends AbstractApplicationAuthenticator implements
         FederatedApplicationAuthenticator {
@@ -144,11 +153,17 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
     public boolean canHandle(HttpServletRequest request) {
 
         log.trace("Inside FacebookAuthenticator.canHandle()");
-
-        if (isFacebookStateParamExists(request) && (isOauth2CodeParamExists(request) || isErrorParamExists(request))) {
-            return true;
+        boolean canHandle = isFacebookStateParamExists(request) && (isOauth2CodeParamExists(request) ||
+                isErrorParamExists(request));
+        if (canHandle && LoggerUtils.isDiagnosticLogsEnabled()) {
+            DiagnosticLog.DiagnosticLogBuilder diagnosticLogBuilder = new DiagnosticLog.DiagnosticLogBuilder(
+                    OUTBOUND_AUTH_FACEBOOK_SERVICE, FrameworkConstants.LogConstants.ActionIDs.HANDLE_AUTH_STEP);
+            diagnosticLogBuilder.resultStatus(DiagnosticLog.ResultStatus.SUCCESS)
+                    .logDetailLevel(DiagnosticLog.LogDetailLevel.INTERNAL_SYSTEM)
+                    .resultMessage("Outbound facebook authenticator handling the authentication.");
+            LoggerUtils.triggerDiagnosticLogEvent(diagnosticLogBuilder);
         }
-        return false;
+        return canHandle;
     }
 
     @Override
@@ -156,6 +171,17 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
                                                  HttpServletResponse response, AuthenticationContext context)
             throws AuthenticationFailedException {
 
+        if (LoggerUtils.isDiagnosticLogsEnabled()) {
+            DiagnosticLog.DiagnosticLogBuilder diagnosticLogBuilder = new DiagnosticLog.DiagnosticLogBuilder(
+                    OUTBOUND_AUTH_FACEBOOK_SERVICE, INITIATE_OUTBOUND_AUTH_REQUEST);
+            diagnosticLogBuilder.logDetailLevel(DiagnosticLog.LogDetailLevel.APPLICATION)
+                    .resultStatus(DiagnosticLog.ResultStatus.SUCCESS)
+                    .inputParam(LogConstants.InputKeys.STEP, context.getCurrentStep())
+                    .inputParam(LogConstants.InputKeys.IDP, context.getExternalIdP().getIdPName())
+                    .inputParams(getApplicationDetails(context))
+                    .resultMessage("Initiate outbound Facebook authentication request.");
+            LoggerUtils.triggerDiagnosticLogEvent(diagnosticLogBuilder);
+        }
         try {
             Map<String, String> authenticatorProperties = context.getAuthenticatorProperties();
             String clientId = authenticatorProperties.get(FacebookAuthenticatorConstants.CLIENT_ID);
@@ -181,6 +207,19 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
                             .setScope(scope).setState(state)
                             .buildQueryMessage();
             response.sendRedirect(authzRequest.getLocationUri());
+            if (LoggerUtils.isDiagnosticLogsEnabled()) {
+                DiagnosticLog.DiagnosticLogBuilder diagnosticLogBuilder = new DiagnosticLog.DiagnosticLogBuilder(
+                        OUTBOUND_AUTH_FACEBOOK_SERVICE, INITIATE_OUTBOUND_AUTH_REQUEST);
+                diagnosticLogBuilder.logDetailLevel(DiagnosticLog.LogDetailLevel.APPLICATION)
+                        .resultStatus(DiagnosticLog.ResultStatus.SUCCESS)
+                        .inputParam(LogConstants.InputKeys.STEP, context.getCurrentStep())
+                        .inputParam(LogConstants.InputKeys.IDP, context.getExternalIdP().getIdPName())
+                        .inputParam("authenticator properties", authenticatorProperties.keySet())
+                        .inputParam(LogConstants.InputKeys.SCOPE, scope)
+                        .inputParams(getApplicationDetails(context))
+                        .resultMessage("Redirecting to the Facebook login page.");
+                LoggerUtils.triggerDiagnosticLogEvent(diagnosticLogBuilder);
+            }
         } catch (IOException e) {
             log.error("Exception while sending to the login page.", e);
             throw new AuthenticationFailedException(e.getMessage(), e);
@@ -198,6 +237,17 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
             throws AuthenticationFailedException {
 
         log.trace("Inside FacebookAuthenticator.authenticate()");
+        if (LoggerUtils.isDiagnosticLogsEnabled()) {
+            DiagnosticLog.DiagnosticLogBuilder diagnosticLogBuilder = new DiagnosticLog.DiagnosticLogBuilder(
+                    OUTBOUND_AUTH_FACEBOOK_SERVICE, PROCESS_AUTHENTICATION_RESPONSE);
+            diagnosticLogBuilder.logDetailLevel(DiagnosticLog.LogDetailLevel.APPLICATION)
+                    .resultStatus(DiagnosticLog.ResultStatus.SUCCESS)
+                    .inputParam(LogConstants.InputKeys.STEP, context.getCurrentStep())
+                    .inputParam(LogConstants.InputKeys.IDP, context.getExternalIdP().getIdPName())
+                    .inputParams(getApplicationDetails(context))
+                    .resultMessage("Processing outbound Facebook authentication response.");
+            LoggerUtils.triggerDiagnosticLogEvent(diagnosticLogBuilder);
+        }
 
         handleErrorResponse(request, response, context);
 
@@ -242,9 +292,22 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
                     }
                 }
             }
-
+            DiagnosticLog.DiagnosticLogBuilder diagnosticLogBuilder = null;
+            if (LoggerUtils.isDiagnosticLogsEnabled()) {
+                diagnosticLogBuilder = new DiagnosticLog.DiagnosticLogBuilder(
+                        OUTBOUND_AUTH_FACEBOOK_SERVICE, PROCESS_AUTHENTICATION_RESPONSE);
+                diagnosticLogBuilder.logDetailLevel(DiagnosticLog.LogDetailLevel.APPLICATION)
+                        .inputParam(LogConstants.InputKeys.STEP, context.getCurrentStep())
+                        .inputParams(getApplicationDetails(context));
+                context.setProperty(DIAGNOSTIC_LOG_KEY_NAME, diagnosticLogBuilder);
+            }
             Map<String, Object> userInfoJson = getUserInfoJson(fbAuthUserInfoUrl, userInfoFields, token);
             buildClaims(context, userInfoJson, claimConfig);
+            if (LoggerUtils.isDiagnosticLogsEnabled() && diagnosticLogBuilder != null) {
+                diagnosticLogBuilder.resultMessage("Outbound Facebook authentication response processed successfully.")
+                        .resultStatus(DiagnosticLog.ResultStatus.SUCCESS);
+                LoggerUtils.triggerDiagnosticLogEvent(diagnosticLogBuilder);
+            }
         } catch (ApplicationAuthenticatorException e) {
             log.error("Failed to process Facebook Connect response.", e);
             throw new AuthenticationFailedException(e.getMessage(), context.getSubject(), e);
@@ -413,6 +476,18 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
                     setSubject(context, jsonObject);
                 }
                 context.getSubject().setUserAttributes(claims);
+            }
+            DiagnosticLog.DiagnosticLogBuilder diagnosticLogBuilder = null;
+            if (LoggerUtils.isDiagnosticLogsEnabled()) {
+                diagnosticLogBuilder = (DiagnosticLog.DiagnosticLogBuilder) context.getProperty(
+                        DIAGNOSTIC_LOG_KEY_NAME);
+                context.removeProperty(DIAGNOSTIC_LOG_KEY_NAME);
+            }
+            if (diagnosticLogBuilder != null) {
+                if (context.getSubject().getUserAttributes() != null) {
+                    diagnosticLogBuilder.inputParam("user attributes (local claim : remote claim)",
+                            getUserAttributeClaimMappingList(context.getSubject()));
+                }
             }
         } else {
             if (log.isDebugEnabled()) {
@@ -679,5 +754,32 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
         configProperties.add(authnEndpoint);
 
         return configProperties;
+    }
+
+    /**
+     * Get application details from the authentication context.
+     * @param context Authentication context.
+     * @return Map of application details.
+     */
+    private Map<String, String> getApplicationDetails(AuthenticationContext context) {
+
+        Map<String, String> applicationDetailsMap = new HashMap<>();
+        FrameworkUtils.getApplicationResourceId(context).ifPresent(applicationId ->
+                applicationDetailsMap.put(LogConstants.InputKeys.APPLICATION_ID, applicationId));
+        FrameworkUtils.getApplicationName(context).ifPresent(applicationName ->
+                applicationDetailsMap.put(LogConstants.InputKeys.APPLICATION_NAME,
+                        applicationName));
+        return applicationDetailsMap;
+    }
+
+    private static List<String> getUserAttributeClaimMappingList(AuthenticatedUser authenticatedUser) {
+
+        return authenticatedUser.getUserAttributes().keySet().stream()
+                .map(claimMapping -> {
+                    String localClaim = claimMapping.getLocalClaim().getClaimUri();
+                    String remoteClaim = claimMapping.getRemoteClaim().getClaimUri();
+                    return localClaim + " : " + remoteClaim;
+                })
+                .collect(Collectors.toList());
     }
 }
