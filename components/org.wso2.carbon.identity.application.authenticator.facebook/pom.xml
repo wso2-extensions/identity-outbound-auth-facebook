@@ -108,6 +108,8 @@
                             version="${carbon.identity.framework.import.version.range}",
                             org.wso2.carbon.identity.application.authenticator.oidc;
                             version="${identity.outbound.auth.oidc.import.version.range}",
+                            org.wso2.carbon.identity.core;
+                            version="${carbon.identity.framework.import.version.range}",
                             org.wso2.carbon.identity.core.util;
                             version="${carbon.identity.framework.import.version.range}",
                             org.wso2.carbon.identity.central.log.mgt.utils;

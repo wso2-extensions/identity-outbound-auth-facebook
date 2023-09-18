@@ -35,6 +35,7 @@ import org.wso2.carbon.identity.application.authentication.framework.exception.A
 import org.wso2.carbon.identity.application.authentication.framework.exception.AuthenticationFailedException;
 import org.wso2.carbon.identity.application.common.model.ClaimConfig;
 import org.wso2.carbon.identity.central.log.mgt.utils.LoggerUtils;
+import org.wso2.carbon.identity.core.ServiceURLBuilder;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 
 import java.io.IOException;
@@ -45,6 +46,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import static org.wso2.carbon.identity.application.authenticator.facebook.TestUtils.mockLoggerUtils;
+import static org.wso2.carbon.identity.application.authenticator.facebook.TestUtils.mockServiceURLBuilder;
 
 public class FacebookProcessResponseTests {
 
@@ -69,6 +71,8 @@ public class FacebookProcessResponseTests {
     private ClaimConfig mockClaimConfig;
     @Mocked
     private LoggerUtils mockLoggerUtils;
+    @Mocked
+    private ServiceURLBuilder mockServiceURLBuilder;
 
     @BeforeMethod
     public void setUp() throws Exception {
@@ -87,8 +91,8 @@ public class FacebookProcessResponseTests {
     @Test(expectedExceptions = AuthenticationFailedException.class)
     public void testProcessAuthResponseWithFailedTokenReq() throws Exception {
 
-        mockIdentityUtil();
         mockLoggerUtils(mockLoggerUtils);
+        mockServiceURLBuilder(mockServiceURLBuilder);
         new Expectations() {
             {
                 mockAuthzResponse.oauthCodeAuthzResponse((HttpServletRequest) withNotNull());
@@ -107,8 +111,8 @@ public class FacebookProcessResponseTests {
     public void testProcessAuthResponseWithCode() throws Exception {
 
         TestUtils.enableDebugLogs(mockedLog, FacebookAuthenticator.class);
-        mockIdentityUtil();
         mockLoggerUtils(mockLoggerUtils);
+        mockServiceURLBuilder(mockServiceURLBuilder);
         mockTokenAndUserInfoCalls(TestConstants.tokenResponse, TestConstants.userInfoResponse);
         new Expectations() {
             {
@@ -132,8 +136,8 @@ public class FacebookProcessResponseTests {
     @Test(expectedExceptions = AuthenticationFailedException.class)
     public void testProcessAuthResponseWithErrorTokenResponse() throws Exception {
 
-        mockIdentityUtil();
         mockLoggerUtils(mockLoggerUtils);
+        mockServiceURLBuilder(mockServiceURLBuilder);
         mockTokenAndUserInfoCalls(TestConstants.tokenResponse.replace("$token", ""), TestConstants.userInfoResponse);
         new Expectations() {
             {
