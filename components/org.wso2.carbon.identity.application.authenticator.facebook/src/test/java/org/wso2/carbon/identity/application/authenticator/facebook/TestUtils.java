@@ -18,9 +18,16 @@
 
 package org.wso2.carbon.identity.application.authenticator.facebook;
 
+import mockit.Delegate;
 import mockit.Expectations;
+import mockit.Mock;
+import mockit.MockUp;
 import org.apache.commons.logging.Log;
+import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
 import org.wso2.carbon.identity.central.log.mgt.utils.LoggerUtils;
+import org.wso2.carbon.identity.core.ServiceURL;
+import org.wso2.carbon.identity.core.ServiceURLBuilder;
+import org.wso2.carbon.identity.core.URLBuilderException;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -51,6 +58,32 @@ public class TestUtils {
         new Expectations(LoggerUtils.class) {{
             mockLoggerUtils.triggerDiagnosticLogEvent(withNotNull());
             minTimes = 0;
+        }};
+    }
+
+    public static void mockServiceURLBuilder(ServiceURLBuilder mockServiceURLBuilder) throws URLBuilderException {
+
+        final String customHost = "https://somehost:9443/commonauth";
+
+        new Expectations() {{
+            ServiceURLBuilder.create();
+            result = mockServiceURLBuilder;
+
+            mockServiceURLBuilder.addPath(FrameworkConstants.COMMONAUTH);
+            result = mockServiceURLBuilder;
+
+            mockServiceURLBuilder.build();
+            result = new Delegate<ServiceURL>() {
+                ServiceURL delegateBuild() {
+                    ServiceURL serviceURL = new MockUp<ServiceURL>() {
+                        @Mock
+                        String getAbsolutePublicURL() {
+                            return customHost;
+                        }
+                    }.getMockInstance();
+                    return serviceURL;
+                }
+            };
         }};
     }
 }

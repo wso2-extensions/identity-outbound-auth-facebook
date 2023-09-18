@@ -34,6 +34,7 @@ import org.wso2.carbon.identity.application.authentication.framework.exception.A
 import org.wso2.carbon.identity.application.authentication.framework.exception.AuthenticationFailedException;
 import org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants;
 import org.wso2.carbon.identity.central.log.mgt.utils.LoggerUtils;
+import org.wso2.carbon.identity.core.ServiceURLBuilder;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 
 import java.io.IOException;
@@ -43,6 +44,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import static org.wso2.carbon.identity.application.authenticator.facebook.TestUtils.mockLoggerUtils;
+import static org.wso2.carbon.identity.application.authenticator.facebook.TestUtils.mockServiceURLBuilder;
 
 public class FacebookAuthenticatorTests {
 
@@ -62,6 +64,8 @@ public class FacebookAuthenticatorTests {
     private OAuthClientRequest.TokenRequestBuilder mockTokenRequestBuilder;
     @Mocked
     private LoggerUtils mockLoggerUtils;
+    @Mocked
+    private ServiceURLBuilder mockServiceURLBuilder;
 
     @BeforeMethod
     public void setUp() throws Exception {
@@ -321,13 +325,8 @@ public class FacebookAuthenticatorTests {
     public void testInitiateAuthReqWithDefaultConfigs() throws Exception {
 
         final String[] redirectedUrl = new String[1];
-        final String customHost = "https://somehost:9443/commonauth";
-        new Expectations() {
-            { /* define in static block */
-                mockIdentityUtil.getServerURL(anyString, anyBoolean, anyBoolean);
-                result = customHost;
-            }
-        };
+
+        mockServiceURLBuilder(mockServiceURLBuilder);
         buildExpectationsForInitiateReq(null, null, null);
         new Expectations() {{
             mockHttpServletResponse.sendRedirect(anyString);

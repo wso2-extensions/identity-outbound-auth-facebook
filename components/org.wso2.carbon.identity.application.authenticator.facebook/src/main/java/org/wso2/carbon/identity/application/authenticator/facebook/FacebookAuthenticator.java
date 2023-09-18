@@ -48,6 +48,8 @@ import org.wso2.carbon.identity.application.common.util.IdentityApplicationConst
 import org.wso2.carbon.identity.base.IdentityConstants;
 import org.wso2.carbon.identity.central.log.mgt.utils.LogConstants;
 import org.wso2.carbon.identity.central.log.mgt.utils.LoggerUtils;
+import org.wso2.carbon.identity.core.ServiceURLBuilder;
+import org.wso2.carbon.identity.core.URLBuilderException;
 import org.wso2.carbon.identity.core.util.IdentityIOStreamUtils;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.utils.DiagnosticLog;
@@ -192,11 +194,7 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
                 scope = FacebookAuthenticatorConstants.EMAIL;
             }
 
-            String callbackUrl = authenticatorProperties.get(FacebookAuthenticatorConstants.FB_CALLBACK_URL);
-            if (StringUtils.isBlank(callbackUrl)) {
-                callbackUrl = IdentityUtil.getServerURL(FrameworkConstants.COMMONAUTH, true, true);
-            }
-
+            String callbackUrl = getCallbackUrl(authenticatorProperties);
             String state = context.getContextIdentifier() + "," + FacebookAuthenticatorConstants.FACEBOOK_LOGIN_TYPE;
 
             OAuthClientRequest authzRequest =
@@ -261,11 +259,7 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
             String tokenEndPoint = getTokenEndpoint();
             String fbAuthUserInfoUrl = getUserInfoEndpoint();
 
-            String callbackUrl = authenticatorProperties.get(FacebookAuthenticatorConstants.FB_CALLBACK_URL);
-            if (StringUtils.isBlank(callbackUrl)) {
-                callbackUrl = IdentityUtil.getServerURL(FrameworkConstants.COMMONAUTH, true, true);
-            }
-
+            String callbackUrl = getCallbackUrl(authenticatorProperties);
             String code = getAuthorizationCode(request);
             String token = getToken(tokenEndPoint, clientId, clientSecret, callbackUrl, code);
 
@@ -781,5 +775,23 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
                     return localClaim + " : " + remoteClaim;
                 })
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Get the callback URL.
+     *
+     * @param authenticatorProperties Authenticator properties.
+     * @return Callback URL.
+     */
+    protected String getCallbackUrl(Map<String, String> authenticatorProperties) {
+
+        if (StringUtils.isNotEmpty(authenticatorProperties.get(FacebookAuthenticatorConstants.FB_CALLBACK_URL))) {
+            return authenticatorProperties.get(FacebookAuthenticatorConstants.FB_CALLBACK_URL);
+        }
+        try {
+            return ServiceURLBuilder.create().addPath(FrameworkConstants.COMMONAUTH).build().getAbsolutePublicURL();
+        } catch (URLBuilderException e) {
+            throw new RuntimeException("Error occurred while building URL.", e);
+        }
     }
 }
