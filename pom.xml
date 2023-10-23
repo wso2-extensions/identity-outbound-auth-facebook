@@ -219,7 +219,7 @@
         <identity.outbound.auth.facebook.export.version>${project.version}</identity.outbound.auth.facebook.export.version>
         <carbon.identity.framework.import.version.range>[5.25.260, 7.0.0)</carbon.identity.framework.import.version.range>
 
-        <identity.outbound.auth.oidc.version>5.11.18</identity.outbound.auth.oidc.version>
+        <identity.outbound.auth.oidc.version>5.11.22</identity.outbound.auth.oidc.version>
         <identity.outbound.auth.oidc.import.version.range>[5.11.18, 6.0.0)</identity.outbound.auth.oidc.import.version.range>
 
         <!-- Carbon kernel version -->
