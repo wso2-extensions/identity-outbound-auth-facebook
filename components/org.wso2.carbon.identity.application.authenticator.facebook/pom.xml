@@ -64,6 +64,14 @@
             <artifactId>org.wso2.carbon.identity.central.log.mgt</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.wso2.orbit.com.nimbusds</groupId>
+            <artifactId>nimbus-jose-jwt</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.identity.inbound.auth.oauth2</groupId>
+            <artifactId>org.wso2.carbon.identity.oauth</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.jmockit</groupId>
             <artifactId>jmockit</artifactId>
             <scope>test</scope>
@@ -101,12 +109,17 @@
 
                             org.osgi.framework; version="${osgi.framework.imp.pkg.version.range}",
                             org.osgi.service.component; version="${osgi.service.component.imp.pkg.version.range}",
+                            com.nimbusds.jose.*; version="${nimbusds.osgi.version.range}",
+                            com.nimbusds.jwt; version="${nimbusds.osgi.version.range}",
 
+                            org.wso2.carbon.identity.oauth2.*;
+                            version="${carbon.identity.inbound.oauth.package.import.version.range}",
+                            org.wso2.carbon.idp.mgt; version="${carbon.identity.framework.import.version.range}",
                             org.wso2.carbon.identity.application.authentication.framework.*;
                             version="${carbon.identity.framework.import.version.range}",
                             org.wso2.carbon.identity.application.common.model;
                             version="${carbon.identity.framework.import.version.range}",
-                            org.wso2.carbon.identity.application.authenticator.oidc;
+                            org.wso2.carbon.identity.application.authenticator.oidc.*;
                             version="${identity.outbound.auth.oidc.import.version.range}",
                             org.wso2.carbon.identity.core;
                             version="${carbon.identity.framework.import.version.range}",
