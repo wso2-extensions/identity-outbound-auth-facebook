@@ -117,7 +117,7 @@
                             org.wso2.carbon.idp.mgt; version="${carbon.identity.framework.import.version.range}",
                             org.wso2.carbon.identity.application.authentication.framework.*;
                             version="${carbon.identity.framework.import.version.range}",
-                            org.wso2.carbon.identity.application.common.model;
+                            org.wso2.carbon.identity.application.common.*;
                             version="${carbon.identity.framework.import.version.range}",
                             org.wso2.carbon.identity.application.authenticator.oidc.*;
                             version="${identity.outbound.auth.oidc.import.version.range}",

@@ -231,7 +231,7 @@
 
     <properties>
         <!--Carbon framework version-->
-        <carbon.identity.framework.version>5.25.431</carbon.identity.framework.version>
+        <carbon.identity.framework.version>5.25.485</carbon.identity.framework.version>
         <identity.outbound.auth.facebook.export.version>${project.version}</identity.outbound.auth.facebook.export.version>
         <carbon.identity.framework.import.version.range>[5.25.260, 7.0.0)</carbon.identity.framework.import.version.range>
 
