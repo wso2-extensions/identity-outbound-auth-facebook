@@ -232,6 +232,8 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
                             .setResponseType(FacebookAuthenticatorConstants.OAUTH2_GRANT_TYPE_CODE)
                             .setScope(scope).setState(state)
                             .buildQueryMessage();
+            context.setProperty(FacebookAuthenticatorConstants.AUTHENTICATOR_NAME +
+                            FacebookAuthenticatorConstants.REDIRECT_URL_SUFFIX, authzRequest.getLocationUri());
             response.sendRedirect(authzRequest.getLocationUri());
             if (LoggerUtils.isDiagnosticLogsEnabled()) {
                 DiagnosticLog.DiagnosticLogBuilder diagnosticLogBuilder = new DiagnosticLog.DiagnosticLogBuilder(
