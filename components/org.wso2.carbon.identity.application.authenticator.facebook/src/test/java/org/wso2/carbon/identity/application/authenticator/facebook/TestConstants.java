@@ -49,11 +49,16 @@ public class TestConstants {
             "oZxDH7JbIkPpKBe0cnYQWBxfHuGTUWhvnu629ek6v2YLkaHlb_Lm04xLD9FNxuZUNQFw83pQtDVpoX5r1V-F0DdUc7gA1RKN3" +
             "xMVYgRyfslRDveGYplxVVNQ1LU3lrZhgaTfcMEsC6rdbd1HjdzG71EPS4674HCSAUelOisNKGa2NgORpldDQsj376QD0G9Mhc8WtW" +
             "oguftrCCGjBy1kKT4VqFLOqlA-8wUhOj_rZT9SUIBQRDPu0RZobvsskqYo40GEZrUoa";
-    public static String sessionDataKey = "7b1c8131-c6bd-4682-892e-1a948a9e57e8";
-    public static String redirectUrl = "https://accounts.facebook.com/o/oauth2/v2/auth?scope=openid&" +
-            "response_type=code&redirect_uri=https%3A%2F%2Flocalhost%3A9443%2Fcommonauth&" +
-            "state=958e9049-8cd2-4580-8745-6679ac8d33f6%2COIDC&nonce=0ed8f1b3-e83f-46c0-8d52-f0d2e7925f98&" +
-            "client_id=sample.client-id";
+    public static String redirectUrl = "https://www.facebook.com/login.php?skip_api_login=1&api_key=1282956895720836&" +
+            "kid_directed_site=0&app_id=sample.app_id&signed_next=1&next=https%3A%2F%2Fwww.facebook.com%2Fdialog%" +
+            "2Foauth%3Fscope%3Demail%252Cpublic_profile%26response_type%3Dcode%26redirect_uri%3Dhttps%253A%252F%252F" +
+            "localhost%253A9443%252Fcommonauth%26state%3Db59cf155-acc5-4b6e-aa58-7e198639ce57%252Cfacebook%26" +
+            "client_id%3D1282956895720836%26ret%3Dlogin%26fbapp_pres%3D0%26" +
+            "logger_id%3Db13e6672-5932-4516-8c4d-0a581f941bb3%26tp%3Dunspecified&" +
+            "cancel_url=https%3A%2F%2Flocalhost%3A9443%2Fcommonauth%3Ferror%3Daccess_denied%26" +
+            "error_code%3D200%26error_description%3DPermissions%2Berror%26error_reason%3D" +
+            "user_denied%26state%3Db59cf155-acc5-4b6e-aa58-7e198639ce57%252Cfacebook%23_%3D_&display=page&" +
+            "locale=en_GB&pl_dbl=0";
 
     public static final String tokenResponse =
             "{\"access_token\":\"$token\"," +
