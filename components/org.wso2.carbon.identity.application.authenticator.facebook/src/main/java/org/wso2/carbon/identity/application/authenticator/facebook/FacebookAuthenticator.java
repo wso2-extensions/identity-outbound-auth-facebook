@@ -63,6 +63,7 @@ import org.wso2.carbon.identity.core.ServiceURLBuilder;
 import org.wso2.carbon.identity.core.URLBuilderException;
 import org.wso2.carbon.identity.core.util.IdentityIOStreamUtils;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
+import org.wso2.carbon.identity.oauth2.IdentityOAuth2ClientException;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.idp.mgt.IdentityProviderManagementException;
 import org.wso2.carbon.idp.mgt.IdentityProviderManager;
@@ -355,7 +356,22 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
                 try {
                     validateJWTToken(context, idToken);
                 } catch (ParseException | IdentityOAuth2Exception | JOSEException e) {
-                    throw new AuthenticationFailedException("JWT Token validation Failed.");
+                    if (e instanceof ParseException
+                            || e instanceof IdentityOAuth2ClientException
+                            || e instanceof JOSEException) {
+                        String errorMsg = "Invalid JWT token.";
+                        if (log.isDebugEnabled()) {
+                            log.debug(errorMsg, e);
+                        }
+                        try {
+                            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, errorMsg);
+                            return;
+                        } catch (IOException e1) {
+                            throw new AuthenticationFailedException("Error occurred while sending error response " +
+                                    "for an invalid JWT token.", e1);
+                        }
+                    }
+                    throw new AuthenticationFailedException("JWT token validation failed.", e);
                 }
             } else {
                 String callbackUrl = getCallbackUrl(authenticatorProperties);
@@ -690,24 +706,24 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
                     claimConfig = identityProvider.getClaimConfig();
                 } else {
                     if (log.isDebugEnabled()) {
-                        log.debug("Authenticator " + getName() + " recieved null IdentityProvider");
+                        log.debug("Authenticator " + getName() + " received null IdentityProvider");
                     }
                 }
             } else {
                 if (log.isDebugEnabled()) {
-                    log.debug("Authenticator " + getName() + " recieved null ExternalIdPConfig");
+                    log.debug("Authenticator " + getName() + " received null ExternalIdPConfig");
                 }
             }
         } else {
             if (log.isDebugEnabled()) {
-                log.debug("Authenticator " + getName() + " recieved null AuthenticationContext");
+                log.debug("Authenticator " + getName() + " received null AuthenticationContext");
             }
         }
         return claimConfig;
     }
 
-    private void validateJWTToken(AuthenticationContext context, String idToken) throws ParseException,
-            AuthenticationFailedException, JOSEException, IdentityOAuth2Exception {
+    private void validateJWTToken(AuthenticationContext context, String idToken) throws
+            ParseException, AuthenticationFailedException, JOSEException, IdentityOAuth2Exception {
 
         SignedJWT signedJWT = SignedJWT.parse(idToken);
         JWTClaimsSet claimsSet = signedJWT.getJWTClaimsSet();
@@ -717,7 +733,7 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
         IdentityProvider identityProvider = getIdentityProvider(idpIdentifier, tenantDomain);
 
         OIDCTokenValidationUtil.validateSignature(signedJWT, identityProvider);
-        OIDCTokenValidationUtil.validateAudience(claimsSet.getAudience(), identityProvider , tenantDomain);
+        OIDCTokenValidationUtil.validateAudience(claimsSet.getAudience(), identityProvider, tenantDomain);
     }
 
     /**
@@ -1002,7 +1018,7 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
 
         IdentityProviderProperty[] identityProviderProperties = externalIdentityProvider.getIdpProperties();
         for (IdentityProviderProperty identityProviderProperty: identityProviderProperties) {
-            if (identityProviderProperty.getName().equals(IdPManagementConstants.IS_TRUSTED_TOKEN_ISSUER)) {
+            if (IdPManagementConstants.IS_TRUSTED_TOKEN_ISSUER.equals(identityProviderProperty.getName())) {
                 return Boolean.parseBoolean(identityProviderProperty.getValue());
             }
         }
