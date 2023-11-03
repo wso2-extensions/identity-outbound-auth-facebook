@@ -536,4 +536,11 @@ public class FacebookAuthenticatorTests {
         Assert.assertEquals(authenticatorDataObj.getAdditionalData()
                 .getAdditionalAuthenticationParams().get(FacebookAuthenticatorConstants.CLIENT_ID_PARAM), dummyClientId);
     }
+
+    @Test
+    public void testGetI18nKey() {
+
+        String facebookI18nKey = facebookAuthenticator.getI18nKey();
+        Assert.assertEquals(facebookI18nKey, FacebookAuthenticatorConstants.AUTHENTICATOR_FACEBOOK);
+    }
 }

@@ -315,6 +315,7 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
 
     @Override
     public String getI18nKey() {
+
         return FacebookAuthenticatorConstants.AUTHENTICATOR_FACEBOOK;
     }
 
