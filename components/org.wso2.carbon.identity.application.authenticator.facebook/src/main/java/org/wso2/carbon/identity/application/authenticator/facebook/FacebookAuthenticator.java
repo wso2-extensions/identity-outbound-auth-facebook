@@ -355,23 +355,10 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
                 token = request.getParameter(ACCESS_TOKEN_PARAM);
                 try {
                     validateJWTToken(context, idToken);
-                } catch (ParseException | IdentityOAuth2Exception | JOSEException e) {
-                    if (e instanceof ParseException
-                            || e instanceof IdentityOAuth2ClientException
-                            || e instanceof JOSEException) {
-                        String errorMsg = "Invalid JWT token.";
-                        if (log.isDebugEnabled()) {
-                            log.debug(errorMsg, e);
-                        }
-                        try {
-                            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, errorMsg);
-                            return;
-                        } catch (IOException e1) {
-                            throw new AuthenticationFailedException("Error occurred while sending error response " +
-                                    "for an invalid JWT token.", e1);
-                        }
-                    }
-                    throw new AuthenticationFailedException("JWT token validation failed.", e);
+                } catch (ParseException | IdentityOAuth2ClientException | JOSEException e) {
+                    throw new AuthenticationFailedException("JWT token is invalid.");
+                } catch (IdentityOAuth2Exception e) {
+                    throw new AuthenticationFailedException("JWT token validation Failed.", e);
                 }
             } else {
                 String callbackUrl = getCallbackUrl(authenticatorProperties);
