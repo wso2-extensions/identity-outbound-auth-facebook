@@ -231,11 +231,11 @@
 
     <properties>
         <!--Carbon framework version-->
-        <carbon.identity.framework.version>5.25.484</carbon.identity.framework.version>
+        <carbon.identity.framework.version>5.25.491</carbon.identity.framework.version>
         <identity.outbound.auth.facebook.export.version>${project.version}</identity.outbound.auth.facebook.export.version>
         <carbon.identity.framework.import.version.range>[5.25.260, 7.0.0)</carbon.identity.framework.import.version.range>
 
-        <identity.outbound.auth.oidc.version>5.11.24</identity.outbound.auth.oidc.version>
+        <identity.outbound.auth.oidc.version>5.11.25</identity.outbound.auth.oidc.version>
         <identity.outbound.auth.oidc.import.version.range>[5.11.18, 6.0.0)</identity.outbound.auth.oidc.import.version.range>
 
         <!--Inbound OAuth version-->
