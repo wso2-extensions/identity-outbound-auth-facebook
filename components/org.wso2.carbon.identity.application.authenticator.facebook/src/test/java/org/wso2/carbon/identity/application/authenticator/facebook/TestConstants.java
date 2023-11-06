@@ -38,6 +38,27 @@ public class TestConstants {
     public static final String customUserInfoEndpoint = "https://facebook.custom.userinfo.com";
     public static final String customFacebookEndpoint = "https://facebook.custom.com";
     public static final String customClaimDialect = "http://custom.claim.dialect";
+    public static String accessToken = "4952b467-86b2-31df-b63c-0bf25cec4f86s";
+    public static String idToken = "eyJ4NXQiOiJOVEF4Wm1NeE5ETXlaRGczTVRVMVpHTTBNekV6T0RKaFpXSTRORE5" +
+            "sWkRVMU9HRmtOakZpTVEiLCJraWQiOiJOVEF4Wm1NeE5ETXlaRGczTVRVMVpHTTBNekV6T0RKaFpXSTRORE5sWkRVMU9" +
+            "HRmtOakZpTVEiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImF1ZCI6WyJ1NUZJZkc1eHpMdkJHaWFtb0FZenpjc" +
+            "XBCcWdhIl0sImF6cCI6InU1RklmRzV4ekx2QkdpYW1vQVl6emNxcEJxZ2EiLCJhdXRoX3RpbWUiOjE1MDY1NzYwODAsImlzcyI6" +
+            "Imh0dHBzOlwvXC9sb2NhbGhvc3Q6OTQ0M1wvb2F1dGgyXC90b2tlbiIsImV4cCI6MTUwNjU3OTY4NCwibm9uY2UiOiI" +
+            "wZWQ4ZjFiMy1lODNmLTQ2YzAtOGQ1Mi1mMGQyZTc5MjVmOTgiLCJpYXQiOjE1MDY1NzYwODQsInNpZCI6Ijg3MDZmNWR" +
+            "hLTU0ZmMtNGZiMC1iNGUxLTY5MDZmYTRiMDRjMiJ9.HopPYFs4lInXvGztNEkJKh8Kdy52eCGbzYy6PiVuM_BlCcGff3SHO" +
+            "oZxDH7JbIkPpKBe0cnYQWBxfHuGTUWhvnu629ek6v2YLkaHlb_Lm04xLD9FNxuZUNQFw83pQtDVpoX5r1V-F0DdUc7gA1RKN3" +
+            "xMVYgRyfslRDveGYplxVVNQ1LU3lrZhgaTfcMEsC6rdbd1HjdzG71EPS4674HCSAUelOisNKGa2NgORpldDQsj376QD0G9Mhc8WtW" +
+            "oguftrCCGjBy1kKT4VqFLOqlA-8wUhOj_rZT9SUIBQRDPu0RZobvsskqYo40GEZrUoa";
+    public static String redirectUrl = "https://www.facebook.com/login.php?skip_api_login=1&api_key=sample.api_key&" +
+            "kid_directed_site=0&app_id=sample.app_id&signed_next=1&next=https%3A%2F%2Fwww.facebook.com%2Fdialog%" +
+            "2Foauth%3Fscope%3Demail%252Cpublic_profile%26response_type%3Dcode%26redirect_uri%3Dhttps%253A%252F%252F" +
+            "localhost%253A9443%252Fcommonauth%26state%3Db59cf155-acc5-4b6e-aa58-32fds345dfg4%252Cfacebook%26" +
+            "client_id%3D1282956895720836%26ret%3Dlogin%26fbapp_pres%3D0%26" +
+            "logger_id%3Db13e6672-6984-2347-8c4d-0a581f941bb3%26tp%3Dunspecified&" +
+            "cancel_url=https%3A%2F%2Flocalhost%3A9443%2Fcommonauth%3Ferror%3Daccess_denied%26" +
+            "error_code%3D200%26error_description%3DPermissions%2Berror%26error_reason%3D" +
+            "user_denied%26state%3Db59cf155-tyy8-4b6e-kk98-7e198639ce57%252Cfacebook%23_%3D_&display=page&" +
+            "locale=en_GB&pl_dbl=0";
 
     public static final String tokenResponse =
             "{\"access_token\":\"$token\"," +

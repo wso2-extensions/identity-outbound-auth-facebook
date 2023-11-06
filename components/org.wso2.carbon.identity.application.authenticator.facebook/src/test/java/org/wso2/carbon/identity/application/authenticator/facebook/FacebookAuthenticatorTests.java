@@ -29,22 +29,38 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.wso2.carbon.identity.application.authentication.framework.config.model.AuthenticatorConfig;
+import org.wso2.carbon.identity.application.authentication.framework.config.model.ExternalIdPConfig;
 import org.wso2.carbon.identity.application.authentication.framework.context.AuthenticationContext;
 import org.wso2.carbon.identity.application.authentication.framework.exception.ApplicationAuthenticatorException;
 import org.wso2.carbon.identity.application.authentication.framework.exception.AuthenticationFailedException;
+import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticationRequest;
+import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatorData;
+import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
+import org.wso2.carbon.identity.application.authenticator.oidc.OIDCAuthenticatorConstants;
+import org.wso2.carbon.identity.application.common.model.IdentityProvider;
+import org.wso2.carbon.identity.application.common.model.IdentityProviderProperty;
 import org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants;
 import org.wso2.carbon.identity.central.log.mgt.utils.LoggerUtils;
 import org.wso2.carbon.identity.core.ServiceURLBuilder;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
+import org.wso2.carbon.idp.mgt.util.IdPManagementConstants;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import static org.wso2.carbon.identity.application.authenticator.facebook.TestConstants.accessToken;
+import static org.wso2.carbon.identity.application.authenticator.facebook.TestConstants.dummyClientId;
+import static org.wso2.carbon.identity.application.authenticator.facebook.TestConstants.idToken;
+import static org.wso2.carbon.identity.application.authenticator.facebook.TestConstants.redirectUrl;
 import static org.wso2.carbon.identity.application.authenticator.facebook.TestUtils.mockLoggerUtils;
 import static org.wso2.carbon.identity.application.authenticator.facebook.TestUtils.mockServiceURLBuilder;
+import static org.wso2.carbon.identity.application.authenticator.facebook.FacebookAuthenticatorConstants.AUTHENTICATOR_FACEBOOK;
+import static org.wso2.carbon.identity.application.authenticator.facebook.FacebookAuthenticatorConstants.AUTHENTICATOR_FRIENDLY_NAME;
+import static org.wso2.carbon.identity.application.authenticator.facebook.FacebookAuthenticatorConstants.AUTHENTICATOR_NAME;
 
 public class FacebookAuthenticatorTests {
 
@@ -66,6 +82,12 @@ public class FacebookAuthenticatorTests {
     private LoggerUtils mockLoggerUtils;
     @Mocked
     private ServiceURLBuilder mockServiceURLBuilder;
+    @Mocked
+    private ExternalIdPConfig externalIdPConfig;
+    @Mocked
+    private IdentityProvider identityProvider;
+    private AuthenticationRequest mockAuthenticationRequest = new AuthenticationRequest();
+    private static Map<String, String> authenticatorProperties = new HashMap<>();
 
     @BeforeMethod
     public void setUp() throws Exception {
@@ -115,6 +137,23 @@ public class FacebookAuthenticatorTests {
             }
         };
         Assert.assertEquals(facebookAuthenticator.canHandle(mockHttpServletRequest), true);
+    }
+
+    @Test
+    public void testCanHandleForNativeSDKBasedFederation() throws Exception {
+
+        new Expectations() {
+            { /* define in static block */
+                mockHttpServletRequest.getParameter(FacebookAuthenticatorConstants.ACCESS_TOKEN_PARAM);
+                result = accessToken;
+                mockHttpServletRequest.getParameter(FacebookAuthenticatorConstants.ID_TOKEN_PARAM);
+                result = idToken;
+            }
+        };
+
+        mockLoggerUtils(mockLoggerUtils);
+
+        Assert.assertTrue(facebookAuthenticator.canHandle(mockHttpServletRequest));
     }
 
     @Test
@@ -376,5 +415,132 @@ public class FacebookAuthenticatorTests {
                 result = TestConstants.dummyCommonAuthId;
             }
         };
+    }
+
+    @Test
+    public void testIsAPIBasedAuthenticationSupported() {
+
+        boolean isAPIBasedAuthenticationSupported = facebookAuthenticator.isAPIBasedAuthenticationSupported();
+        Assert.assertTrue(isAPIBasedAuthenticationSupported);
+    }
+
+    @Test
+    public void testGetAuthInitiationData() {
+
+        new Expectations() {
+            {
+                mockAuthenticationContext.getExternalIdP();
+                result = externalIdPConfig;
+            }
+        };
+        new Expectations() {
+            {
+                externalIdPConfig.getIdPName();
+                result = "LOCAL";
+            }
+        };
+        new Expectations() {
+            {
+                mockAuthenticationContext.getProperty(
+                        FacebookAuthenticatorConstants.AUTHENTICATOR_NAME +
+                                FacebookAuthenticatorConstants.REDIRECT_URL_SUFFIX);
+                result = redirectUrl;
+            }
+        };
+
+        Optional<AuthenticatorData> authenticatorData = facebookAuthenticator.getAuthInitiationData
+                (mockAuthenticationContext);
+
+        Assert.assertTrue(authenticatorData.isPresent());
+        AuthenticatorData authenticatorDataObj = authenticatorData.get();
+
+        Assert.assertEquals(authenticatorDataObj.getName(), AUTHENTICATOR_NAME);
+        Assert.assertEquals(authenticatorDataObj.getI18nKey(), AUTHENTICATOR_FACEBOOK);
+        Assert.assertEquals(authenticatorDataObj.getDisplayName(), AUTHENTICATOR_FRIENDLY_NAME);
+        Assert.assertEquals(authenticatorDataObj.getRequiredParams().size(),
+                2);
+        Assert.assertEquals(authenticatorDataObj.getPromptType(),
+                FrameworkConstants.AuthenticatorPromptType.REDIRECTION_PROMPT);
+        Assert.assertTrue(authenticatorDataObj.getRequiredParams()
+                .contains(FacebookAuthenticatorConstants.OAUTH2_GRANT_TYPE_CODE));
+        Assert.assertTrue(authenticatorDataObj.getRequiredParams()
+                .contains(FacebookAuthenticatorConstants.OAUTH2_PARAM_STATE));
+        Assert.assertEquals(authenticatorDataObj.getAdditionalData().getRedirectUrl(), TestConstants.redirectUrl);
+    }
+
+    @Test
+    public void testGetAuthInitiationDataForNativeSDKBasedFederation() {
+
+        IdentityProviderProperty property = new IdentityProviderProperty();
+        property.setName(IdPManagementConstants.IS_TRUSTED_TOKEN_ISSUER);
+        property.setValue("true");
+        IdentityProviderProperty[] identityProviderProperties = new IdentityProviderProperty[1];
+        identityProviderProperties[0] = property;
+
+        new Expectations() {
+            {
+                mockAuthenticationContext.getExternalIdP();
+                result = externalIdPConfig;
+            }
+        };
+        new Expectations() {
+            {
+                externalIdPConfig.getIdPName();
+                result = "LOCAL";
+            }
+        };
+        new Expectations() {
+            {
+                externalIdPConfig.getIdentityProvider();
+                result = identityProvider;
+            }
+        };
+        new Expectations() {
+            {
+                identityProvider.getIdpProperties();
+                result = identityProviderProperties;
+            }
+        };
+        new Expectations() {
+            {
+                mockAuthenticationContext.getAuthenticatorProperties();
+                result = authenticatorProperties;
+            }
+        };
+        new Expectations() {
+            {
+                mockAuthenticationContext.getExternalIdP();
+                result = externalIdPConfig;
+            }
+        };
+
+        authenticatorProperties.put(OIDCAuthenticatorConstants.CLIENT_ID, dummyClientId);
+
+        Optional<AuthenticatorData> authenticatorData = facebookAuthenticator.getAuthInitiationData
+                (mockAuthenticationContext);
+
+        Assert.assertTrue(authenticatorData.isPresent());
+        AuthenticatorData authenticatorDataObj = authenticatorData.get();
+
+        Assert.assertEquals(authenticatorDataObj.getName(), FacebookAuthenticatorConstants.AUTHENTICATOR_NAME);
+        Assert.assertEquals(authenticatorDataObj.getI18nKey(), AUTHENTICATOR_FACEBOOK);
+        Assert.assertEquals(authenticatorDataObj.getDisplayName(), FacebookAuthenticatorConstants.AUTHENTICATOR_FRIENDLY_NAME);
+        Assert.assertEquals(authenticatorDataObj.getRequiredParams().size(),
+                2);
+        Assert.assertEquals(authenticatorDataObj.getPromptType(),
+                FrameworkConstants.AuthenticatorPromptType.INTERNAL_PROMPT);
+        Assert.assertTrue(authenticatorDataObj.getRequiredParams()
+                .contains(FacebookAuthenticatorConstants.ACCESS_TOKEN_PARAM));
+        Assert.assertTrue(authenticatorDataObj.getRequiredParams()
+                .contains(FacebookAuthenticatorConstants.ID_TOKEN_PARAM));
+        Assert.assertEquals(authenticatorDataObj.getAdditionalData()
+                .getAdditionalAuthenticationParams().get(FacebookAuthenticatorConstants.CLIENT_ID_PARAM), dummyClientId);
+    }
+
+    @Test
+    public void testGetI18nKey() {
+
+        String facebookI18nKey = facebookAuthenticator.getI18nKey();
+        Assert.assertEquals(facebookI18nKey, FacebookAuthenticatorConstants.AUTHENTICATOR_FACEBOOK);
     }
 }

@@ -18,6 +18,9 @@
 
 package org.wso2.carbon.identity.application.authenticator.facebook;
 
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -36,15 +39,23 @@ import org.wso2.carbon.identity.application.authentication.framework.exception.A
 import org.wso2.carbon.identity.application.authentication.framework.exception.AuthenticationFailedException;
 import org.wso2.carbon.identity.application.authentication.framework.exception.FrameworkException;
 import org.wso2.carbon.identity.application.authentication.framework.exception.InvalidCredentialsException;
+import org.wso2.carbon.identity.application.authentication.framework.model.AdditionalData;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
+import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatorData;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkUtils;
+import org.wso2.carbon.identity.application.authenticator.oidc.OIDCAuthenticatorConstants;
+import org.wso2.carbon.identity.application.authenticator.oidc.util.OIDCErrorConstants;
+import org.wso2.carbon.identity.application.authenticator.oidc.util.OIDCTokenValidationUtil;
 import org.wso2.carbon.identity.application.common.model.Claim;
 import org.wso2.carbon.identity.application.common.model.ClaimConfig;
 import org.wso2.carbon.identity.application.common.model.ClaimMapping;
+import org.wso2.carbon.identity.application.common.model.FederatedAuthenticatorConfig;
 import org.wso2.carbon.identity.application.common.model.IdentityProvider;
+import org.wso2.carbon.identity.application.common.model.IdentityProviderProperty;
 import org.wso2.carbon.identity.application.common.model.Property;
 import org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants;
+import org.wso2.carbon.identity.application.common.util.IdentityApplicationManagementUtil;
 import org.wso2.carbon.identity.base.IdentityConstants;
 import org.wso2.carbon.identity.central.log.mgt.utils.LogConstants;
 import org.wso2.carbon.identity.central.log.mgt.utils.LoggerUtils;
@@ -52,6 +63,11 @@ import org.wso2.carbon.identity.core.ServiceURLBuilder;
 import org.wso2.carbon.identity.core.URLBuilderException;
 import org.wso2.carbon.identity.core.util.IdentityIOStreamUtils;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
+import org.wso2.carbon.identity.oauth2.IdentityOAuth2ClientException;
+import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
+import org.wso2.carbon.idp.mgt.IdentityProviderManagementException;
+import org.wso2.carbon.idp.mgt.IdentityProviderManager;
+import org.wso2.carbon.idp.mgt.util.IdPManagementConstants;
 import org.wso2.carbon.utils.DiagnosticLog;
 
 import java.io.BufferedReader;
@@ -61,21 +77,28 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.Charset;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import static org.wso2.carbon.identity.application.authenticator.facebook.FacebookAuthenticatorConstants.LogConstants.ActionIDs.PROCESS_AUTHENTICATION_RESPONSE;
+import static org.wso2.carbon.identity.application.authenticator.facebook.FacebookAuthenticatorConstants.ACCESS_TOKEN_PARAM;
+import static org.wso2.carbon.identity.application.authenticator.facebook.FacebookAuthenticatorConstants.ID_TOKEN_PARAM;
 import static org.wso2.carbon.identity.application.authenticator.facebook.FacebookAuthenticatorConstants.LogConstants.ActionIDs.INITIATE_OUTBOUND_AUTH_REQUEST;
+import static org.wso2.carbon.identity.application.authenticator.facebook.FacebookAuthenticatorConstants.LogConstants.ActionIDs.PROCESS_AUTHENTICATION_RESPONSE;
 import static org.wso2.carbon.identity.application.authenticator.facebook.FacebookAuthenticatorConstants.LogConstants.DIAGNOSTIC_LOG_KEY_NAME;
 import static org.wso2.carbon.identity.application.authenticator.facebook.FacebookAuthenticatorConstants.LogConstants.OUTBOUND_AUTH_FACEBOOK_SERVICE;
 
+/**
+ * This class holds the Facebook authenticator.
+ */
 public class FacebookAuthenticator extends AbstractApplicationAuthenticator implements
         FederatedApplicationAuthenticator {
 
@@ -86,7 +109,7 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
     private String userInfoEndpoint;
 
     /**
-     * Initiate tokenEndpoint
+     * Initiate tokenEndpoint.
      */
     protected void initTokenEndpoint() {
         this.tokenEndpoint = getAuthenticatorConfig().getParameterMap().get(FacebookAuthenticatorConstants
@@ -97,7 +120,7 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
     }
 
     /**
-     * Initiate authorization server endpoint
+     * Initiate authorization server endpoint.
      */
     protected void initOAuthEndpoint() {
         this.oAuthEndpoint = getAuthenticatorConfig().getParameterMap().get(FacebookAuthenticatorConstants
@@ -108,7 +131,7 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
     }
 
     /**
-     * Initiate userInfoEndpoint
+     * Initiate userInfoEndpoint.
      */
     protected void initUserInfoEndPoint() {
         this.userInfoEndpoint = getAuthenticatorConfig().getParameterMap().get(FacebookAuthenticatorConstants
@@ -155,8 +178,14 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
     public boolean canHandle(HttpServletRequest request) {
 
         log.trace("Inside FacebookAuthenticator.canHandle()");
-        boolean canHandle = isFacebookStateParamExists(request) && (isOauth2CodeParamExists(request) ||
-                isErrorParamExists(request));
+
+        boolean canHandle;
+        if (isNativeSDKBasedFederationCall(request)) {
+            canHandle = true;
+        } else {
+            canHandle = isFacebookStateParamExists(request) && (isOauth2CodeParamExists(request) ||
+                    isErrorParamExists(request));
+        }
         if (canHandle && LoggerUtils.isDiagnosticLogsEnabled()) {
             DiagnosticLog.DiagnosticLogBuilder diagnosticLogBuilder = new DiagnosticLog.DiagnosticLogBuilder(
                     OUTBOUND_AUTH_FACEBOOK_SERVICE, FrameworkConstants.LogConstants.ActionIDs.HANDLE_AUTH_STEP);
@@ -204,6 +233,8 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
                             .setResponseType(FacebookAuthenticatorConstants.OAUTH2_GRANT_TYPE_CODE)
                             .setScope(scope).setState(state)
                             .buildQueryMessage();
+            context.setProperty(FacebookAuthenticatorConstants.AUTHENTICATOR_NAME +
+                            FacebookAuthenticatorConstants.REDIRECT_URL_SUFFIX, authzRequest.getLocationUri());
             response.sendRedirect(authzRequest.getLocationUri());
             if (LoggerUtils.isDiagnosticLogsEnabled()) {
                 DiagnosticLog.DiagnosticLogBuilder diagnosticLogBuilder = new DiagnosticLog.DiagnosticLogBuilder(
@@ -226,6 +257,66 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
             throw new AuthenticationFailedException(e.getMessage(), e);
         }
         return;
+    }
+
+    /**
+     * This method is responsible for obtaining authenticator-specific data needed to
+     * initialize the authentication process within the provided authentication context.
+     *
+     * @param context The authentication context containing information about the current authentication attempt.
+     * @return An {@code Optional} containing an {@code AuthenticatorData} object representing the initiation data.
+     *         If the initiation data is available, it is encapsulated within the {@code Optional}; otherwise,
+     *         an empty {@code Optional} is returned.
+     */
+    @Override
+    public Optional<AuthenticatorData> getAuthInitiationData(AuthenticationContext context) {
+
+        AuthenticatorData authenticatorData = new AuthenticatorData();
+        authenticatorData.setName(getName());
+        authenticatorData.setDisplayName(getFriendlyName());
+        authenticatorData.setI18nKey(getI18nKey());
+        String idpName = context.getExternalIdP().getIdPName();
+        authenticatorData.setIdp(idpName);
+
+        List<String> requiredParameterList = new ArrayList<>();
+        if (isTrustedTokenIssuer(context)) {
+            requiredParameterList.add(FacebookAuthenticatorConstants.ACCESS_TOKEN_PARAM);
+            requiredParameterList.add(FacebookAuthenticatorConstants.ID_TOKEN_PARAM);
+            authenticatorData.setPromptType(FrameworkConstants.AuthenticatorPromptType.INTERNAL_PROMPT);
+            authenticatorData.setAdditionalData(getAdditionalData(context, true));
+        } else {
+            requiredParameterList.add(FacebookAuthenticatorConstants.OAUTH2_GRANT_TYPE_CODE);
+            requiredParameterList.add(FacebookAuthenticatorConstants.OAUTH2_PARAM_STATE);
+            authenticatorData.setPromptType(FrameworkConstants.AuthenticatorPromptType.REDIRECTION_PROMPT);
+            authenticatorData.setAdditionalData(getAdditionalData(context, false));
+        }
+        authenticatorData.setRequiredParams(requiredParameterList);
+
+        return Optional.of(authenticatorData);
+    }
+
+    private static AdditionalData getAdditionalData(
+            AuthenticationContext context, boolean isNativeSDKBasedFederationCall) {
+
+        AdditionalData additionalData = new AdditionalData();
+
+        if (isNativeSDKBasedFederationCall) {
+            Map<String, String> additionalAuthenticationParams = new HashMap<>();
+            additionalAuthenticationParams.put(FacebookAuthenticatorConstants.CLIENT_ID_PARAM,
+                    context.getAuthenticatorProperties().get(FacebookAuthenticatorConstants.CLIENT_ID));
+            additionalData.setAdditionalAuthenticationParams(additionalAuthenticationParams);
+        } else {
+            additionalData.setRedirectUrl((String) context.getProperty(
+                    FacebookAuthenticatorConstants.AUTHENTICATOR_NAME +
+                    FacebookAuthenticatorConstants.REDIRECT_URL_SUFFIX));
+        }
+        return additionalData;
+    }
+
+    @Override
+    public String getI18nKey() {
+
+        return FacebookAuthenticatorConstants.AUTHENTICATOR_FACEBOOK;
     }
 
     @Override
@@ -259,9 +350,22 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
             String tokenEndPoint = getTokenEndpoint();
             String fbAuthUserInfoUrl = getUserInfoEndpoint();
 
-            String callbackUrl = getCallbackUrl(authenticatorProperties);
-            String code = getAuthorizationCode(request);
-            String token = getToken(tokenEndPoint, clientId, clientSecret, callbackUrl, code);
+            String token;
+            if (isTrustedTokenIssuer(context) && isNativeSDKBasedFederationCall(request)) {
+                String idToken = request.getParameter(ID_TOKEN_PARAM);
+                token = request.getParameter(ACCESS_TOKEN_PARAM);
+                try {
+                    validateJWTToken(context, idToken);
+                } catch (ParseException | IdentityOAuth2ClientException | JOSEException e) {
+                    throw new AuthenticationFailedException("JWT token is invalid.");
+                } catch (IdentityOAuth2Exception e) {
+                    throw new AuthenticationFailedException("JWT token validation Failed.", e);
+                }
+            } else {
+                String callbackUrl = getCallbackUrl(authenticatorProperties);
+                String code = getAuthorizationCode(request);
+                token = getToken(tokenEndPoint, clientId, clientSecret, callbackUrl, code);
+            }
 
             ClaimConfig claimConfig = getAuthenticatorClaimConfigurations(context);
             if (claimConfig == null) {
@@ -319,7 +423,7 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
     }
 
     protected String getToken(String tokenEndPoint, String clientId, String clientSecret,
-                            String callbackurl, String code) throws ApplicationAuthenticatorException {
+                              String callbackurl, String code) throws ApplicationAuthenticatorException {
         OAuthClientRequest tokenRequest = null;
         String token = null;
         try {
@@ -451,7 +555,7 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
                 try {
                     subjectFromClaims = FrameworkUtils.getFederatedSubjectFromClaims(context, getClaimDialectURI());
                     if (StringUtils.isNotBlank(subjectFromClaims)) {
-                            context.getSubject().setAuthenticatedSubjectIdentifier(subjectFromClaims);
+                        context.getSubject().setAuthenticatedSubjectIdentifier(subjectFromClaims);
                     }
                 } catch (FrameworkException e) {
                     if (log.isDebugEnabled()) {
@@ -492,7 +596,7 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
     }
 
     /**
-     * Prefix give ClaimDialactUri to given claimUri.
+     * Prefix give ClaimDialectUri to given claimUri.
      */
     private String getEffectiveClaimUri(String claimDialectUri, String claimUri) {
 
@@ -503,7 +607,7 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
     }
 
     /**
-     * This method decide whether to append cliam dialect uri to the claim uri
+     * This method decide whether to append claim dialect uri to the claim uri.
      * @return true if appended
      */
     protected boolean shouldPrefixClaimDialectUri() {
@@ -515,6 +619,11 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
     @Override
     public String getContextIdentifier(HttpServletRequest request) {
         log.trace("Inside FacebookAuthenticator.getContextIdentifier()");
+
+        if (isNativeSDKBasedFederationCall(request)) {
+            return request.getParameter(FacebookAuthenticatorConstants.SESSION_DATA_KEY_PARAM);
+        }
+
         String state = request.getParameter(FacebookAuthenticatorConstants.OAUTH2_PARAM_STATE);
         if (state != null) {
             return state.split(",")[0];
@@ -554,7 +663,7 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
     }
 
     /**
-     * This method reads parameters from application-authentication.xml
+     * This method reads parameters from application-authentication.xml.
      * @return emptyMap if there is no Parameters else returns map of parameters
      */
     private Map<String, String> readParametersFromAuthenticatorConfig() {
@@ -571,8 +680,8 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
     }
 
     /**
-     * This method get idp claim configurations
-     * @param context
+     * This method get idp claim configurations.
+     * @param context Authentication Context
      * @return ClaimConfig
      */
     private ClaimConfig getAuthenticatorClaimConfigurations(AuthenticationContext context) {
@@ -585,20 +694,102 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
                     claimConfig = identityProvider.getClaimConfig();
                 } else {
                     if (log.isDebugEnabled()) {
-                        log.debug("Authenticator " + getName() + " recieved null IdentityProvider");
+                        log.debug("Authenticator " + getName() + " received null IdentityProvider");
                     }
                 }
             } else {
                 if (log.isDebugEnabled()) {
-                    log.debug("Authenticator " + getName() + " recieved null ExternalIdPConfig");
+                    log.debug("Authenticator " + getName() + " received null ExternalIdPConfig");
                 }
             }
         } else {
             if (log.isDebugEnabled()) {
-                log.debug("Authenticator " + getName() + " recieved null AuthenticationContext");
+                log.debug("Authenticator " + getName() + " received null AuthenticationContext");
             }
         }
         return claimConfig;
+    }
+
+    private void validateJWTToken(AuthenticationContext context, String idToken) throws
+            ParseException, AuthenticationFailedException, JOSEException, IdentityOAuth2Exception {
+
+        SignedJWT signedJWT = SignedJWT.parse(idToken);
+        JWTClaimsSet claimsSet = signedJWT.getJWTClaimsSet();
+        OIDCTokenValidationUtil.validateIssuerClaim(claimsSet);
+        String tenantDomain = context.getTenantDomain();
+        String idpIdentifier = OIDCTokenValidationUtil.getIssuer(claimsSet);
+        IdentityProvider identityProvider = getIdentityProvider(idpIdentifier, tenantDomain);
+
+        OIDCTokenValidationUtil.validateSignature(signedJWT, identityProvider);
+        OIDCTokenValidationUtil.validateAudience(claimsSet.getAudience(), identityProvider, tenantDomain);
+    }
+
+    /**
+     * Get the identity provider from issuer and tenant domain.
+     *
+     * @param jwtIssuer   JWT issuer.
+     * @param tenantDomain Tenant domain.
+     * @return IdentityProvider.
+     * @throws AuthenticationFailedException If there is an issue while getting the identity provider.
+     */
+    private IdentityProvider getIdentityProvider(String jwtIssuer, String tenantDomain)
+            throws AuthenticationFailedException {
+
+        IdentityProvider identityProvider;
+        OIDCErrorConstants.ErrorMessages errorMessages =
+                OIDCErrorConstants.ErrorMessages.NO_REGISTERED_IDP_FOR_ISSUER;
+        try {
+            identityProvider = IdentityProviderManager.getInstance().getIdPByMetadataProperty(
+                    IdentityApplicationConstants.IDP_ISSUER_NAME, jwtIssuer, tenantDomain, false);
+
+            if (identityProvider == null) {
+                identityProvider = IdentityProviderManager.getInstance().getIdPByName(jwtIssuer, tenantDomain);
+            }
+            if (identityProvider != null && StringUtils.equalsIgnoreCase(identityProvider.getIdentityProviderName(),
+                    OIDCAuthenticatorConstants.BackchannelLogout.DEFAULT_IDP_NAME)) {
+                // Check whether this jwt was issued by the resident identity provider.
+                identityProvider = getResidentIDPForIssuer(tenantDomain, jwtIssuer);
+
+                if (identityProvider == null) {
+                    throw new AuthenticationFailedException(errorMessages.getCode(), errorMessages.getMessage());
+                }
+            }
+        } catch (IdentityProviderManagementException e) {
+            throw new AuthenticationFailedException(errorMessages.getCode(), errorMessages.getMessage(), e);
+        }
+        return identityProvider;
+    }
+
+    /**
+     * Get the resident identity provider from issuer and tenant domain.
+     *
+     * @param tenantDomain Tenant domain.
+     * @param jwtIssuer   Issuer of the jwt.
+     * @return IdentityProvider.
+     * @throws AuthenticationFailedException If there is an issue while getting the resident identity provider.
+     */
+    private IdentityProvider getResidentIDPForIssuer(String tenantDomain, String jwtIssuer)
+            throws AuthenticationFailedException {
+
+        String issuer = StringUtils.EMPTY;
+        IdentityProvider residentIdentityProvider;
+        try {
+            residentIdentityProvider = IdentityProviderManager.getInstance().getResidentIdP(tenantDomain);
+        } catch (IdentityProviderManagementException e) {
+            String errorMsg = OIDCErrorConstants.ErrorMessages.GETTING_RESIDENT_IDP_FAILED.getCode() + " - " +
+                    String.format(OIDCErrorConstants.ErrorMessages.GETTING_RESIDENT_IDP_FAILED.getMessage(),
+                            tenantDomain);
+            throw new AuthenticationFailedException(errorMsg);
+        }
+        FederatedAuthenticatorConfig[] fedAuthnConfigs = residentIdentityProvider.getFederatedAuthenticatorConfigs();
+        FederatedAuthenticatorConfig oauthAuthenticatorConfig =
+                IdentityApplicationManagementUtil.getFederatedAuthenticator(fedAuthnConfigs,
+                        IdentityApplicationConstants.Authenticator.OIDC.NAME);
+        if (oauthAuthenticatorConfig != null) {
+            issuer = IdentityApplicationManagementUtil.getProperty(oauthAuthenticatorConfig.getProperties(),
+                    OIDCAuthenticatorConstants.BackchannelLogout.OIDC_IDP_ENTITY_ID).getValue();
+        }
+        return jwtIssuer.equals(issuer) ? residentIdentityProvider : null;
     }
 
     private void handleErrorResponse(HttpServletRequest request, HttpServletResponse response,
@@ -606,13 +797,14 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
             throws InvalidCredentialsException {
         if (isErrorParamExists(request)) {
             StringBuilder errorMessage = new StringBuilder();
-            String error_code = request.getParameter(FacebookAuthenticatorConstants.OAUTH2_PARAM_ERROR_CODE);
+            String errorCode = request.getParameter(FacebookAuthenticatorConstants.OAUTH2_PARAM_ERROR_CODE);
             String error = request.getParameter(FacebookAuthenticatorConstants.OAUTH2_PARAM_ERROR);
-            String error_description = request.getParameter(FacebookAuthenticatorConstants.OAUTH2_PARAM_ERROR_DESCRIPTION);
-            String error_reason = request.getParameter(FacebookAuthenticatorConstants.OAUTH2_PARAM_ERROR_REASON);
-            errorMessage.append("error_code: ").append(error_code).append(", error: ").append(error)
-                    .append(", error_description: ").append(error_description)
-                    .append(", error_reason: ").append(error_reason);
+            String errorDescription = request
+                    .getParameter(FacebookAuthenticatorConstants.OAUTH2_PARAM_ERROR_DESCRIPTION);
+            String errorReason = request.getParameter(FacebookAuthenticatorConstants.OAUTH2_PARAM_ERROR_REASON);
+            errorMessage.append("errorCode: ").append(errorCode).append(", error: ").append(error)
+                    .append(", error_description: ").append(errorDescription)
+                    .append(", error_reason: ").append(errorReason);
             if (log.isDebugEnabled()) {
                 log.debug("Failed to authenticate via Facebook. " + errorMessage.toString());
             }
@@ -750,6 +942,11 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
         return configProperties;
     }
 
+    @Override
+    public boolean isAPIBasedAuthenticationSupported() {
+        return true;
+    }
+
     /**
      * Get application details from the authentication context.
      * @param context Authentication context.
@@ -793,5 +990,32 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
         } catch (URLBuilderException e) {
             throw new RuntimeException("Error occurred while building URL.", e);
         }
+    }
+
+    private boolean isTrustedTokenIssuer(AuthenticationContext context) {
+
+        ExternalIdPConfig externalIdPConfig = context.getExternalIdP();
+        if (externalIdPConfig == null) {
+            return false;
+        }
+
+        IdentityProvider externalIdentityProvider = externalIdPConfig.getIdentityProvider();
+        if (externalIdentityProvider == null) {
+            return false;
+        }
+
+        IdentityProviderProperty[] identityProviderProperties = externalIdentityProvider.getIdpProperties();
+        for (IdentityProviderProperty identityProviderProperty: identityProviderProperties) {
+            if (IdPManagementConstants.IS_TRUSTED_TOKEN_ISSUER.equals(identityProviderProperty.getName())) {
+                return Boolean.parseBoolean(identityProviderProperty.getValue());
+            }
+        }
+
+        return false;
+    }
+
+    private boolean isNativeSDKBasedFederationCall(HttpServletRequest request) {
+
+        return request.getParameter(ACCESS_TOKEN_PARAM) != null && request.getParameter(ID_TOKEN_PARAM) != null;
     }
 }

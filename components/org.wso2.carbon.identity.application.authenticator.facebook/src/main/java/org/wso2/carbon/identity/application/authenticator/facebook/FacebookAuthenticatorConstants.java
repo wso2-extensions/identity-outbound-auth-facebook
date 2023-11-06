@@ -1,12 +1,12 @@
 /*
- * Copyright (c) 2014, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2014, WSO2 LLC. (http://www.wso2.com).
  *
- * WSO2 Inc. licenses this file to you under the Apache License,
+ * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
@@ -18,10 +18,15 @@
 
 package org.wso2.carbon.identity.application.authenticator.facebook;
 
+/**
+ * This class holds the constants related to the Facebook authenticator.
+ */
 public class FacebookAuthenticatorConstants {
 
     public static final String AUTHENTICATOR_NAME = "FacebookAuthenticator";
     public static final String FACEBOOK_LOGIN_TYPE = "facebook";
+    public static final String AUTHENTICATOR_FACEBOOK = "authenticator.facebook";
+    public static final String AUTHENTICATOR_FRIENDLY_NAME = "facebook";
 
     public static final String OAUTH2_GRANT_TYPE_CODE = "code";
     public static final String OAUTH2_PARAM_STATE = "state";
@@ -46,6 +51,12 @@ public class FacebookAuthenticatorConstants {
     public static final String CLAIM_DIALECT_URI_PARAMETER = "ClaimDialectUri";
     public static final String PREFIE_CLAIM_DIALECT_URI_PARAMETER = "PrefixClaimDialectUri";
     public static final String FORWARD_SLASH = "/";
+
+    public static final String ACCESS_TOKEN_PARAM = "accessToken";
+    public static final String ID_TOKEN_PARAM = "idToken";
+    public static final String SESSION_DATA_KEY_PARAM = "sessionDataKey";
+    public static final String CLIENT_ID_PARAM = "clientId";
+    public static final String REDIRECT_URL_SUFFIX = "_redirect_url";
 
     /**
      * Constants related to log management.
