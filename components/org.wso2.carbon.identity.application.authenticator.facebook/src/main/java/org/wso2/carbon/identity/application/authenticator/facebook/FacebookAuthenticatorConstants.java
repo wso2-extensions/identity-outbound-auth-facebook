@@ -57,6 +57,8 @@ public class FacebookAuthenticatorConstants {
     public static final String SESSION_DATA_KEY_PARAM = "sessionDataKey";
     public static final String CLIENT_ID_PARAM = "clientId";
     public static final String REDIRECT_URL_SUFFIX = "_redirect_url";
+    public static final String IS_API_BASED = "IS_API_BASED";
+    public static final String REDIRECT_URL = "REDIRECT_URL";
 
     /**
      * Constants related to log management.
