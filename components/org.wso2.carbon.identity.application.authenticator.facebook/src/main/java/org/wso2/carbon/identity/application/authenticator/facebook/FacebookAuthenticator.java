@@ -367,6 +367,9 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
                 }
             } else {
                 String callbackUrl = getCallbackUrl(authenticatorProperties);
+                if (Boolean.parseBoolean((String) context.getProperty(FacebookAuthenticatorConstants.IS_API_BASED))) {
+                    callbackUrl = (String) context.getProperty(FacebookAuthenticatorConstants.REDIRECT_URL);
+                }
                 String code = getAuthorizationCode(request);
                 token = getToken(tokenEndPoint, clientId, clientSecret, callbackUrl, code);
             }
