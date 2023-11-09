@@ -436,7 +436,7 @@ public class FacebookAuthenticatorTests {
         new Expectations() {
             {
                 externalIdPConfig.getIdPName();
-                result = "LOCAL";
+                result = "Facebook";
             }
         };
         new Expectations() {
@@ -486,7 +486,7 @@ public class FacebookAuthenticatorTests {
         new Expectations() {
             {
                 externalIdPConfig.getIdPName();
-                result = "LOCAL";
+                result = "Facebook";
             }
         };
         new Expectations() {
