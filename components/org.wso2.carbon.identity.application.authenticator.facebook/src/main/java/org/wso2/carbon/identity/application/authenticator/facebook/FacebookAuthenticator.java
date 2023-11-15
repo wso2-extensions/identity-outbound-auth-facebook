@@ -42,6 +42,7 @@ import org.wso2.carbon.identity.application.authentication.framework.exception.I
 import org.wso2.carbon.identity.application.authentication.framework.model.AdditionalData;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatorData;
+import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatorMessage;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkUtils;
 import org.wso2.carbon.identity.application.authenticator.oidc.OIDCAuthenticatorConstants;
@@ -104,9 +105,12 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
 
     private static final long serialVersionUID = -4844100162196896194L;
     private static final Log log = LogFactory.getLog(FacebookAuthenticator.class);
+    private static final String ERROR_REASON = "errorReason";
+    private static final String INVALID_REQUEST = "invalid_request";
     private String tokenEndpoint;
     private String oAuthEndpoint;
     private String userInfoEndpoint;
+    private static final String AUTHENTICATOR_MESSAGE = "authenticatorMessage";
 
     /**
      * Initiate tokenEndpoint.
@@ -257,10 +261,11 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
             log.error("Exception while sending to the login page.", e);
             throw new AuthenticationFailedException(e.getMessage(), e);
         } catch (OAuthSystemException e) {
-            log.error("Exception while building authorization code request.", e);
+            String message = "Exception while building the authorization code request.";
+            setAuthenticatorMessageToContext(message, INVALID_REQUEST, null, context);
+            log.error(message, e);
             throw new AuthenticationFailedException(e.getMessage(), e);
         }
-        return;
     }
 
     /**
@@ -815,6 +820,7 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
             if (log.isDebugEnabled()) {
                 log.debug("Failed to authenticate via Facebook. " + errorMessage.toString());
             }
+            setAuthenticatorMessageToContext(error, errorCode, errorReason, context);
             throw new InvalidCredentialsException(errorMessage.toString());
         }
     }
@@ -1024,5 +1030,18 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
     private boolean isNativeSDKBasedFederationCall(HttpServletRequest request) {
 
         return request.getParameter(ACCESS_TOKEN_PARAM) != null && request.getParameter(ID_TOKEN_PARAM) != null;
+    }
+
+    private static void setAuthenticatorMessageToContext(String errorMessage, String errorCode, String errorReason,
+                                                         AuthenticationContext context) {
+
+        Map<String, String> messageContext = new HashMap<>();
+        if (StringUtils.isNotEmpty(errorReason)) {
+            messageContext.put(ERROR_REASON, errorReason);
+        }
+
+        AuthenticatorMessage authenticatorMessage = new AuthenticatorMessage(FrameworkConstants.
+                AuthenticatorMessageType.ERROR, errorCode, errorMessage, messageContext);
+        context.setProperty(AUTHENTICATOR_MESSAGE, authenticatorMessage);
     }
 }
