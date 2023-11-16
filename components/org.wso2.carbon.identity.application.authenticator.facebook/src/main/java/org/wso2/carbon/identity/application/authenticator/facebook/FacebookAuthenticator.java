@@ -300,6 +300,9 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
             authenticatorData.setAdditionalData(getAdditionalData(context, false));
         }
         authenticatorData.setRequiredParams(requiredParameterList);
+        if (context.getProperty(AUTHENTICATOR_MESSAGE) != null) {
+            authenticatorData.setMessage((AuthenticatorMessage) context.getProperty(AUTHENTICATOR_MESSAGE));
+        }
 
         return Optional.of(authenticatorData);
     }
