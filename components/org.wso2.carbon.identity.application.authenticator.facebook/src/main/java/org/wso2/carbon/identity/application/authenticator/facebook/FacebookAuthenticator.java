@@ -86,6 +86,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -232,7 +233,14 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
                 callbackUrl = (String) context.getProperty(FacebookAuthenticatorConstants.REDIRECT_URL);
             }
 
-            String state = context.getContextIdentifier() + "," + FacebookAuthenticatorConstants.FACEBOOK_LOGIN_TYPE;
+            String state;
+            if (FrameworkUtils.isAPIBasedAuthenticationFlow(request)) {
+                state = UUID.randomUUID() + "," + FacebookAuthenticatorConstants.FACEBOOK_LOGIN_TYPE;
+            } else {
+                state = context.getContextIdentifier() + "," + FacebookAuthenticatorConstants.FACEBOOK_LOGIN_TYPE;
+            }
+            context.setProperty(FacebookAuthenticatorConstants.AUTHENTICATOR_NAME +
+                    FacebookAuthenticatorConstants.STATE_PARAM_SUFFIX, state);
 
             OAuthClientRequest authzRequest =
                     OAuthClientRequest.authorizationLocation(authorizationEP)
@@ -321,6 +329,11 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
             additionalData.setRedirectUrl((String) context.getProperty(
                     FacebookAuthenticatorConstants.AUTHENTICATOR_NAME +
                     FacebookAuthenticatorConstants.REDIRECT_URL_SUFFIX));
+            Map<String, String> additionalAuthenticationParams = new HashMap<>();
+            String state = (String) context.getProperty(FacebookAuthenticatorConstants.AUTHENTICATOR_NAME +
+                    FacebookAuthenticatorConstants.STATE_PARAM_SUFFIX);
+            additionalAuthenticationParams.put(FacebookAuthenticatorConstants.OAUTH2_PARAM_STATE, state);
+            additionalData.setAdditionalAuthenticationParams(additionalAuthenticationParams);
         }
         return additionalData;
     }
@@ -635,7 +648,7 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
     public String getContextIdentifier(HttpServletRequest request) {
         log.trace("Inside FacebookAuthenticator.getContextIdentifier()");
 
-        if (isNativeSDKBasedFederationCall(request)) {
+        if (FrameworkUtils.isAPIBasedAuthenticationFlow(request)) {
             return request.getParameter(FacebookAuthenticatorConstants.SESSION_DATA_KEY_PARAM);
         }
 
