@@ -233,14 +233,14 @@
         <!--Carbon framework version-->
         <carbon.identity.framework.version>5.25.560</carbon.identity.framework.version>
         <identity.outbound.auth.facebook.export.version>${project.version}</identity.outbound.auth.facebook.export.version>
-        <carbon.identity.framework.import.version.range>[5.25.260, 7.0.0)</carbon.identity.framework.import.version.range>
+        <carbon.identity.framework.import.version.range>[5.25.260, 8.0.0)</carbon.identity.framework.import.version.range>
 
         <identity.outbound.auth.oidc.version>5.11.25</identity.outbound.auth.oidc.version>
         <identity.outbound.auth.oidc.import.version.range>[5.11.18, 6.0.0)</identity.outbound.auth.oidc.import.version.range>
 
         <!--Inbound OAuth version-->
         <carbon.identity.oauth.version>6.4.158</carbon.identity.oauth.version>
-        <carbon.identity.inbound.oauth.package.import.version.range>[6.0.0, 7.0.0)
+        <carbon.identity.inbound.oauth.package.import.version.range>[6.0.0, 8.0.0)
         </carbon.identity.inbound.oauth.package.import.version.range>
 
         <!-- Carbon kernel version -->
