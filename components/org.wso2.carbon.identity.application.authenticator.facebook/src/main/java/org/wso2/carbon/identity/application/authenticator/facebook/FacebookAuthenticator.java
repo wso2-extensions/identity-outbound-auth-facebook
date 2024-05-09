@@ -401,29 +401,6 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
                         "obtaining claim configurations");
             }
             if (StringUtils.isNotBlank(userInfoFields)) {
-                /**
-                 * The below code is commented because of facebook login failure issue.
-                 * Once the issue https://github.com/wso2/product-is/issues/20336 is fixed,
-                 * please update the commented code segment
-                 */
-//                String userClaimUri = claimConfig.getUserClaimURI();
-//                if (StringUtils.isNotBlank(userClaimUri)) {
-//                    if (!Arrays.asList(userInfoFields.split(",")).contains(userClaimUri) && !claimConfig
-//                            .isLocalClaimDialect()) {
-//                        userInfoFields += ("," + userClaimUri);
-//                        if (log.isDebugEnabled()) {
-//                            log.debug("Adding user claim uri " + userClaimUri + " into the user info fields in " +
-//                                    "authenticator");
-//                        }
-//                    }
-//                } else {
-//                    if (!Arrays.asList(userInfoFields.split(",")).contains(FacebookAuthenticatorConstants
-//                            .DEFAULT_USER_IDENTIFIER)) {
-//                        userInfoFields += ("," + FacebookAuthenticatorConstants.DEFAULT_USER_IDENTIFIER);
-//                    }
-//                }
-                // This code was extracted from line 415-418. Once above code is uncommented,
-                // please remove the below code segment
                 if (!Arrays.asList(userInfoFields.split(",")).contains(FacebookAuthenticatorConstants
                         .DEFAULT_USER_IDENTIFIER)) {
                     userInfoFields += ("," + FacebookAuthenticatorConstants.DEFAULT_USER_IDENTIFIER);
