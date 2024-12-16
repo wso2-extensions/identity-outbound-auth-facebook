@@ -961,6 +961,7 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
 
     @Override
     public boolean isAPIBasedAuthenticationSupported() {
+        
         return true;
     }
 
