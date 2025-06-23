@@ -72,6 +72,10 @@
             <artifactId>org.wso2.carbon.identity.oauth</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.wso2.carbon.identity.framework</groupId>
+            <artifactId>org.wso2.carbon.identity.flow.execution.engine</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.jmockit</groupId>
             <artifactId>jmockit</artifactId>
             <scope>test</scope>
@@ -137,6 +141,11 @@
                             org.wso2.carbon.identity.central.log.mgt.utils;
                             version="${carbon.identity.framework.import.version.range}",
                             org.wso2.carbon.utils.*; version="${carbon.kernel.package.import.version.range}",
+                            org.wso2.carbon.identity.flow.execution.engine.*;
+                            version="${carbon.identity.framework.import.version.range}",
+                            org.wso2.carbon.identity.claim.metadata.*;
+                            version="${carbon.identity.framework.import.version.range}",
+                            org.wso2.carbon.user.api; version="${carbon.user.api.imp.pkg.version.range}",
                         </Import-Package>
                         <Export-Package>
                             !org.wso2.carbon.identity.application.authenticator.facebook.internal,

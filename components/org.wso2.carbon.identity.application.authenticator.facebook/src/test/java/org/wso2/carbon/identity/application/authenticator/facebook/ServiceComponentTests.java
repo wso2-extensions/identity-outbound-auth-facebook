@@ -64,7 +64,8 @@ public class ServiceComponentTests {
             };
         }};
         new Expectations() {{
-            mockBundleContext.registerService(anyString, any, (Dictionary<String, ?>) any);
+            mockBundleContext.registerService(ApplicationAuthenticator.class.getName(), any,
+                    (Dictionary<String, ?>) any);
             result = new Delegate() {
                 ServiceRegistration<?> registerService(String className, Object authenticator, Dictionary<String, ?>
                         params) {
