@@ -23,6 +23,9 @@ import org.apache.commons.logging.LogFactory;
 import org.osgi.service.component.ComponentContext;
 import org.wso2.carbon.identity.application.authentication.framework.ApplicationAuthenticator;
 import org.wso2.carbon.identity.application.authenticator.facebook.FacebookAuthenticator;
+import org.wso2.carbon.identity.application.authenticator.facebook.FacebookExecutor;
+import org.wso2.carbon.identity.flow.execution.engine.graph.Executor;
+
 /**
  * @scr.component name="identity.application.authenticator.facebook.component"
  * immediate="true"
@@ -37,7 +40,7 @@ public class SocialAuthenticatorServiceComponent {
             FacebookAuthenticator facebookAuthenticator = new FacebookAuthenticator();
             ctxt.getBundleContext().registerService(ApplicationAuthenticator.class.getName(),
                     facebookAuthenticator, null);
-
+            ctxt.getBundleContext().registerService(Executor.class.getName(), new FacebookExecutor(), null);
             if (log.isDebugEnabled()) {
                 log.debug("Social Authenticator bundle is activated.");
             }
