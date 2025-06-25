@@ -172,7 +172,7 @@ public class FacebookExecutor implements Executor {
                     .getLocationUri();
         } catch (OAuthSystemException e) {
             LOG.error("Error building Facebook authorization URL.", e);
-            throw buildExecutorFailure("Error building Facebook authorization URL.");
+            throw new FlowEngineServerException("Error building Facebook authorization URL.");
         }
     }
 
@@ -182,7 +182,7 @@ public class FacebookExecutor implements Executor {
         String expected = (String) context.getProperty(OAUTH2_PARAM_STATE);
         if (!StringUtils.equals(received, expected)) {
             LOG.error("State mismatch. Expected: " + expected + ", Received: " + received);
-            throw buildExecutorFailure("State parameter mismatch.");
+            throw new FlowEngineServerException("State parameter mismatch.");
         }
     }
 
@@ -202,13 +202,13 @@ public class FacebookExecutor implements Executor {
             String accessToken = response.getParam(FB_ACCESS_TOKEN);
             if (StringUtils.isBlank(accessToken)) {
                 LOG.error("Access token is empty in Facebook token response.");
-                throw buildExecutorFailure("Access token is null or empty.");
+                throw new FlowEngineServerException("Access token is null or empty.");
             }
 
             return accessToken;
         } catch (OAuthSystemException | OAuthProblemException e) {
             LOG.error("Failed to retrieve access token from Facebook.", e);
-            throw buildExecutorFailure("Failed to retrieve access token from Facebook.");
+            throw new FlowEngineServerException("Failed to retrieve access token from Facebook.");
         }
     }
 
@@ -240,7 +240,7 @@ public class FacebookExecutor implements Executor {
             Map<String, Object> result = JSONUtils.parseJSON(json);
             if (result.isEmpty()) {
                 LOG.error("User info response from Facebook is empty.");
-                throw buildExecutorFailure("User info response is empty.");
+                throw new FlowEngineServerException("User info response is empty.");
             }
 
             String claimDialectUri = getAuthenticatorConfig(CLAIM_DIALECT_URI_PARAMETER);
@@ -276,7 +276,7 @@ public class FacebookExecutor implements Executor {
             return mappedClaims;
         } catch (IOException e) {
             LOG.error("Failed to retrieve user info from Facebook.", e);
-            throw buildExecutorFailure("Failed to retrieve user info from Facebook.");
+            throw new FlowEngineServerException("Failed to retrieve user info from Facebook.");
         }
     }
 
@@ -296,14 +296,9 @@ public class FacebookExecutor implements Executor {
         String portalUrl = context.getPortalUrl();
         if (StringUtils.isBlank(portalUrl)) {
             LOG.error("Portal URL is missing in FlowExecutionContext.");
-            throw buildExecutorFailure("Portal URL is required but not provided.");
+            throw new FlowEngineServerException("Portal URL is required but not provided.");
         }
         return portalUrl;
-    }
-
-    private FlowEngineServerException buildExecutorFailure(String message) {
-
-        return new FlowEngineServerException(message);
     }
 
     private String getAuthenticatorConfig(String key) {
