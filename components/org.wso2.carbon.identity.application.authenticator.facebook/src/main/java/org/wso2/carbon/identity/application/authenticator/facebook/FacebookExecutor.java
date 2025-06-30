@@ -255,6 +255,7 @@ public class FacebookExecutor implements Executor {
                 userIdClaimURI = getEffectiveClaimUri(claimDialectUri, userIdClaimURI);
             }
 
+            String defaultUserIdentifier = null;
             Map<String, Object> mappedClaims = new HashMap<>();
             for (Map.Entry<String, Object> entry : result.entrySet()) {
                 String claimUri = getEffectiveClaimUri(claimDialectUri, entry.getKey());
@@ -271,6 +272,16 @@ public class FacebookExecutor implements Executor {
                         && StringUtils.isNotBlank(userIdClaimURI) && claimValueObject != null) {
                     mappedClaims.put(USERNAME_CLAIM, claimValueObject.toString());
                 }
+
+                if (FacebookAuthenticatorConstants.DEFAULT_USER_IDENTIFIER.equals(entry.getKey())
+                        && claimValueObject != null) {
+                    defaultUserIdentifier = claimValueObject.toString();
+                }
+            }
+
+            if (mappedClaims.get(USERNAME_CLAIM) == null && StringUtils.isNotBlank(defaultUserIdentifier)) {
+                // If USERNAME_CLAIM is not set, use the default user identifier claim.
+                mappedClaims.put(USERNAME_CLAIM, defaultUserIdentifier);
             }
 
             return mappedClaims;
