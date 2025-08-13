@@ -27,7 +27,7 @@
     <groupId>org.wso2.carbon.identity.outbound.auth.facebook</groupId>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>identity-outbound-auth-facebook</artifactId>
-    <version>5.2.21-SNAPSHOT</version>
+    <version>5.2.22-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>WSO2 Carbon - Facebook Authenticator Feature Aggregator Module</name>
     <description>
@@ -303,7 +303,7 @@
 
     <properties>
         <!--Carbon framework version-->
-        <carbon.identity.framework.version>7.8.228</carbon.identity.framework.version>
+        <carbon.identity.framework.version>7.8.403</carbon.identity.framework.version>
         <identity.outbound.auth.facebook.export.version>${project.version}</identity.outbound.auth.facebook.export.version>
         <carbon.identity.framework.import.version.range>[5.25.260, 8.0.0)</carbon.identity.framework.import.version.range>
 

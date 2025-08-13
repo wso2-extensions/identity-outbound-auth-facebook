@@ -37,6 +37,7 @@ import org.wso2.carbon.identity.application.common.model.ClaimMapping;
 import org.wso2.carbon.identity.flow.execution.engine.Constants;
 import org.wso2.carbon.identity.flow.execution.engine.exception.FlowEngineException;
 import org.wso2.carbon.identity.flow.execution.engine.exception.FlowEngineServerException;
+import org.wso2.carbon.identity.flow.execution.engine.graph.AuthenticationExecutor;
 import org.wso2.carbon.identity.flow.execution.engine.graph.Executor;
 import org.wso2.carbon.identity.flow.execution.engine.model.ExecutorResponse;
 import org.wso2.carbon.identity.flow.execution.engine.model.FlowExecutionContext;
@@ -68,7 +69,7 @@ import static org.wso2.carbon.identity.flow.execution.engine.Constants.ExecutorS
 /**
  * Facebook Executor for handling the OAuth2 login flow.
  */
-public class FacebookExecutor implements Executor {
+public class FacebookExecutor extends AuthenticationExecutor {
 
     private static final Log LOG = LogFactory.getLog(FacebookExecutor.class);
     private static final String EXECUTOR_NAME = "FacebookExecutor";
@@ -79,6 +80,12 @@ public class FacebookExecutor implements Executor {
     public String getName() {
 
         return EXECUTOR_NAME;
+    }
+
+    @Override
+    public String getAMRValue() {
+
+        return FacebookAuthenticatorConstants.AUTHENTICATOR_NAME;
     }
 
     @Override
