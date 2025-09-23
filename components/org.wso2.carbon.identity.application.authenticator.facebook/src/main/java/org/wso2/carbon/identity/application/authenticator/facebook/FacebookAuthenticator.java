@@ -730,6 +730,7 @@ public class FacebookAuthenticator extends AbstractApplicationAuthenticator impl
             ParseException, AuthenticationFailedException, JOSEException, IdentityOAuth2Exception {
 
         SignedJWT signedJWT = SignedJWT.parse(idToken);
+        IdentityUtil.validateJWTDepth(idToken);
         JWTClaimsSet claimsSet = signedJWT.getJWTClaimsSet();
         OIDCTokenValidationUtil.validateIssuerClaim(claimsSet);
         String tenantDomain = context.getTenantDomain();
