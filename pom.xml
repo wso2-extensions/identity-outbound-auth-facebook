@@ -303,7 +303,7 @@
 
     <properties>
         <!--Carbon framework version-->
-        <carbon.identity.framework.version>7.8.403</carbon.identity.framework.version>
+        <carbon.identity.framework.version>7.8.506</carbon.identity.framework.version>
         <identity.outbound.auth.facebook.export.version>${project.version}</identity.outbound.auth.facebook.export.version>
         <carbon.identity.framework.import.version.range>[5.25.260, 8.0.0)</carbon.identity.framework.import.version.range>
 
