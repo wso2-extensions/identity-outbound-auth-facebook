@@ -23,6 +23,7 @@ import mockit.Expectations;
 import mockit.Mocked;
 import mockit.Tested;
 import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.oltu.oauth2.client.response.OAuthAuthzResponse;
 import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
 import org.testng.Assert;
@@ -45,6 +46,8 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.nimbusds.jwt.SignedJWT;
+
 import static org.wso2.carbon.identity.application.authenticator.facebook.TestUtils.mockLoggerUtils;
 import static org.wso2.carbon.identity.application.authenticator.facebook.TestUtils.mockServiceURLBuilder;
 
@@ -64,6 +67,8 @@ public class FacebookProcessResponseTests {
     @Mocked
     private IdentityUtil mockIdentityUtil;
     @Mocked
+    private SignedJWT mockSignedJWT;
+    @Mocked
     private OAuthAuthzResponse mockAuthzResponse;
     @Mocked
     private FileBasedConfigurationBuilder mockFileBasedConfigBuilder;
@@ -76,6 +81,11 @@ public class FacebookProcessResponseTests {
 
     @BeforeMethod
     public void setUp() throws Exception {
+        // Ensure the authenticator obtains the mocked logger by mocking LogFactory.getLog before class instantiation
+        new Expectations() {{
+            LogFactory.getLog(FacebookAuthenticator.class);
+            result = mockedLog;
+        }};
         facebookAuthenticator = new FacebookAuthenticator();
     }
 
@@ -230,6 +240,39 @@ public class FacebookProcessResponseTests {
 
         TestUtils.enableDebugLogs(mockedLog, FacebookAuthenticator.class);
         mockFBAuthenticator.buildClaims(mockAuthenticationContext, null, mockClaimConfig);
+    }
+
+    @Test(expectedExceptions = java.text.ParseException.class)
+    public void testValidateJWTToken_invokesValidateJWTDepth() throws Exception {
+
+        // Build a dummy token string (content irrelevant since SignedJWT.parse is mocked)
+        String idToken = "dummy.token.value";
+
+        // Mock SignedJWT.parse to return a mocked SignedJWT so parsing does not fail,
+        // and make getJWTClaimsSet throw a ParseException after the log statement.
+        new Expectations() {{
+            SignedJWT.parse((String) any);
+            result = mockSignedJWT;
+
+            // Do not throw from validateJWTDepth so execution reaches the log.error("Reached here") line
+            IdentityUtil.validateJWTDepth((String) anyString);
+            // no result -> returns normally
+
+            mockSignedJWT.getJWTClaimsSet();
+            result = new java.text.ParseException("forced", 0);
+        }};
+
+        // Invoke the private method which should call IdentityUtil.validateJWTDepth and hit the log line,
+        // then throw the ParseException coming from getJWTClaimsSet.
+        try {
+            Deencapsulation.invoke(facebookAuthenticator, "validateJWTToken", mockAuthenticationContext, idToken);
+        } finally {
+            // Verify the static call to IdentityUtil.validateJWTDepth happened
+            new mockit.Verifications() {{
+                IdentityUtil.validateJWTDepth((String) anyString);
+                times = 1;
+            }};
+        }
     }
 
     private void buildExpectationsForProcessAuthnReq(final String fbURL, final String scope, final String callbackURL) {
