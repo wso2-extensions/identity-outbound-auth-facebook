@@ -18,18 +18,17 @@
 
 package org.wso2.carbon.identity.application.authenticator.facebook;
 
-import mockit.Deencapsulation;
-import mockit.Expectations;
-import mockit.Mocked;
-import mockit.Tested;
 import org.apache.commons.logging.Log;
+import org.mockito.Mock;
+import org.mockito.MockedStatic;
+import org.mockito.MockitoAnnotations;
 import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.wso2.carbon.identity.application.authentication.framework.config.model.ExternalIdPConfig;
 import org.wso2.carbon.identity.application.authentication.framework.context.AuthenticationContext;
 import org.wso2.carbon.identity.application.authentication.framework.exception.ApplicationAuthenticatorException;
-import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkUtils;
 import org.wso2.carbon.identity.application.common.model.ClaimConfig;
 import org.wso2.carbon.identity.application.common.model.ClaimMapping;
 import org.wso2.carbon.identity.application.common.model.IdentityProvider;
@@ -37,36 +36,47 @@ import org.wso2.carbon.identity.central.log.mgt.utils.LogConstants;
 import org.wso2.carbon.identity.central.log.mgt.utils.LoggerUtils;
 import org.wso2.carbon.utils.DiagnosticLog;
 
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.mockito.Mockito.mockStatic;
 import static org.wso2.carbon.identity.application.authenticator.facebook.FacebookAuthenticatorConstants.LogConstants.ActionIDs.PROCESS_AUTHENTICATION_RESPONSE;
 import static org.wso2.carbon.identity.application.authenticator.facebook.FacebookAuthenticatorConstants.LogConstants.DIAGNOSTIC_LOG_KEY_NAME;
 import static org.wso2.carbon.identity.application.authenticator.facebook.FacebookAuthenticatorConstants.LogConstants.OUTBOUND_AUTH_FACEBOOK_SERVICE;
-import static org.wso2.carbon.identity.application.authenticator.facebook.TestUtils.mockLoggerUtils;
 
 public class TestAuthnContextWithoutMocking {
 
-    @Mocked
+    @Mock
     private Log mockedLog;
     private FacebookAuthenticator facebookAuthenticator;
-    @Mocked
+    @Mock
     private ExternalIdPConfig externalIdPConfig;
-    @Tested
+    
     private FacebookAuthenticator mockFBAuthenticator;
-    @Mocked
-    private LoggerUtils mockLoggerUtils;
-    @Mocked
-    FrameworkUtils mockFrameworkUtils;
+    private MockedStatic<LoggerUtils> mockedLoggerUtils;
 
     @BeforeMethod
     public void setUp() throws Exception {
+        MockitoAnnotations.openMocks(this);
         facebookAuthenticator = new FacebookAuthenticator();
+        mockFBAuthenticator = new FacebookAuthenticator();
+    }
+
+    @AfterMethod
+    public void tearDown() {
+        if (mockedLoggerUtils != null) {
+            try {
+                mockedLoggerUtils.close();
+            } catch (Exception e) {
+                // Ignore
+            }
+            mockedLoggerUtils = null;
+        }
     }
 
     @Test
     public void testSetSubject() throws Exception {
-
         AuthenticationContext authenticationContext = new AuthenticationContext();
         Map<String, Object> jsonMap = new HashMap<>();
         jsonMap.put(FacebookAuthenticatorConstants.DEFAULT_USER_IDENTIFIER, TestConstants.dummyUsername);
@@ -77,7 +87,6 @@ public class TestAuthnContextWithoutMocking {
 
     @Test(expectedExceptions = ApplicationAuthenticatorException.class)
     public void testSetSubjectWithoutSubject() throws Exception {
-
         AuthenticationContext authenticationContext = new AuthenticationContext();
         Map<String, Object> jsonMap = new HashMap<>();
         facebookAuthenticator.setSubject(authenticationContext, jsonMap);
@@ -85,7 +94,9 @@ public class TestAuthnContextWithoutMocking {
 
     @Test
     public void testBuildClaims() throws Exception {
-
+        mockedLoggerUtils = mockStatic(LoggerUtils.class);
+        mockedLoggerUtils.when(LoggerUtils::isDiagnosticLogsEnabled).thenReturn(false);
+        
         boolean usernameFound = false;
         boolean firstNameFound = false;
         AuthenticationContext authenticationContext = buildClaims(TestConstants.customClaimDialect);
@@ -116,8 +127,9 @@ public class TestAuthnContextWithoutMocking {
 
     @Test
     public void testBuildClaimWithoutCustomDialect() throws Exception {
-
-        mockLoggerUtils(mockLoggerUtils);
+        mockedLoggerUtils = mockStatic(LoggerUtils.class);
+        mockedLoggerUtils.when(LoggerUtils::isDiagnosticLogsEnabled).thenReturn(true);
+        
         boolean usernameFound = false;
         boolean firstNameFound = false;
         AuthenticationContext authenticationContext = buildClaims(null);
@@ -147,7 +159,6 @@ public class TestAuthnContextWithoutMocking {
     }
 
     private AuthenticationContext buildClaims(final String claimDialect) throws Exception {
-
         TestUtils.enableDebugLogs(mockedLog, FacebookAuthenticator.class);
         AuthenticationContext authenticationContext = new AuthenticationContext();
         addDiagnosticLogBuilderToAuthContext(authenticationContext);
@@ -156,23 +167,25 @@ public class TestAuthnContextWithoutMocking {
         claimConfig.setUserClaimURI("http://something");
         externalIdPConfig.getIdentityProvider().setClaimConfig(claimConfig);
         authenticationContext.setExternalIdP(externalIdPConfig);
-        new Expectations(mockFBAuthenticator) {{
-            Deencapsulation.invoke(mockFBAuthenticator, "getClaimDialectURI");
-            result = claimDialect;
-        }};
-        new Expectations(mockFBAuthenticator) {{
-            Deencapsulation.invoke(mockFBAuthenticator, "shouldPrefixClaimDialectUri");
-            if (claimDialect == null) {
-                result = false;
-            } else {
-                result = true;
+        
+        // Use custom authenticator with overridden methods
+        FacebookAuthenticator customAuthenticator = new FacebookAuthenticator() {
+            @Override
+            public String getClaimDialectURI() {
+                return claimDialect;
             }
-        }};
+            
+            @Override
+            public boolean shouldPrefixClaimDialectUri() {
+                return claimDialect != null;
+            }
+        };
+        
         Map<String, Object> jsonMap = new HashMap<>();
         jsonMap.put(FacebookAuthenticatorConstants.DEFAULT_USER_IDENTIFIER, TestConstants.dummyUsername);
         jsonMap.put("someTestKey", null);
         jsonMap.put(TestConstants.FIRST_NAME, TestConstants.FIRST_NAME + "_value");
-        mockFBAuthenticator.buildClaims(authenticationContext, jsonMap, claimConfig);
+        customAuthenticator.buildClaims(authenticationContext, jsonMap, claimConfig);
         return authenticationContext;
     }
 
