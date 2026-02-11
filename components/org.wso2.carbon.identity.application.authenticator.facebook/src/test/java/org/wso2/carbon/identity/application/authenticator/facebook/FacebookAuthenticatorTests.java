@@ -18,16 +18,16 @@
 
 package org.wso2.carbon.identity.application.authenticator.facebook;
 
-import mockit.Deencapsulation;
-import mockit.Delegate;
-import mockit.Expectations;
-import mockit.Mocked;
-import mockit.Tested;
 import org.apache.oltu.oauth2.client.request.OAuthClientRequest;
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
+import org.mockito.Mock;
+import org.mockito.MockedStatic;
+import org.mockito.MockitoAnnotations;
 import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+import org.wso2.carbon.identity.application.authentication.framework.config.builder.FileBasedConfigurationBuilder;
 import org.wso2.carbon.identity.application.authentication.framework.config.model.AuthenticatorConfig;
 import org.wso2.carbon.identity.application.authentication.framework.config.model.ExternalIdPConfig;
 import org.wso2.carbon.identity.application.authentication.framework.context.AuthenticationContext;
@@ -41,84 +41,132 @@ import org.wso2.carbon.identity.application.common.model.IdentityProvider;
 import org.wso2.carbon.identity.application.common.model.IdentityProviderProperty;
 import org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants;
 import org.wso2.carbon.identity.central.log.mgt.utils.LoggerUtils;
+import org.wso2.carbon.identity.common.testng.WithCarbonHome;
 import org.wso2.carbon.identity.core.ServiceURLBuilder;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.idp.mgt.util.IdPManagementConstants;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.when;
 import static org.wso2.carbon.identity.application.authenticator.facebook.TestConstants.accessToken;
 import static org.wso2.carbon.identity.application.authenticator.facebook.TestConstants.dummyClientId;
 import static org.wso2.carbon.identity.application.authenticator.facebook.TestConstants.idToken;
 import static org.wso2.carbon.identity.application.authenticator.facebook.TestConstants.redirectUrl;
-import static org.wso2.carbon.identity.application.authenticator.facebook.TestUtils.mockLoggerUtils;
-import static org.wso2.carbon.identity.application.authenticator.facebook.TestUtils.mockServiceURLBuilder;
 import static org.wso2.carbon.identity.application.authenticator.facebook.FacebookAuthenticatorConstants.AUTHENTICATOR_FACEBOOK;
 import static org.wso2.carbon.identity.application.authenticator.facebook.FacebookAuthenticatorConstants.AUTHENTICATOR_FRIENDLY_NAME;
 import static org.wso2.carbon.identity.application.authenticator.facebook.FacebookAuthenticatorConstants.AUTHENTICATOR_NAME;
 
+@WithCarbonHome
 public class FacebookAuthenticatorTests {
 
     private FacebookAuthenticator facebookAuthenticator;
 
-    @Mocked
+    @Mock
     private HttpServletRequest mockHttpServletRequest;
-    @Mocked
+    @Mock
     private HttpServletResponse mockHttpServletResponse;
-    @Mocked
+    @Mock
     private AuthenticationContext mockAuthenticationContext;
-    @Tested
-    private FacebookAuthenticator mockFBAuthenticator;
-    @Mocked
-    private IdentityUtil mockIdentityUtil;
-    @Mocked
-    private OAuthClientRequest.TokenRequestBuilder mockTokenRequestBuilder;
-    @Mocked
-    private LoggerUtils mockLoggerUtils;
-    @Mocked
-    private ServiceURLBuilder mockServiceURLBuilder;
-    @Mocked
+    @Mock
     private ExternalIdPConfig externalIdPConfig;
-    @Mocked
+    @Mock
     private IdentityProvider identityProvider;
+    
+    private FacebookAuthenticator mockFBAuthenticator;
     private AuthenticationRequest mockAuthenticationRequest = new AuthenticationRequest();
     private static Map<String, String> authenticatorProperties = new HashMap<>();
+    private MockedStatic<LoggerUtils> mockedLoggerUtils;
+    private MockedStatic<ServiceURLBuilder> mockedServiceURLBuilder;
+    private MockedStatic<FileBasedConfigurationBuilder> mockedFileBasedConfigBuilder;
+    private MockedStatic<OAuthClientRequest> mockedOAuthClientRequest;
 
     @BeforeMethod
     public void setUp() throws Exception {
+        MockitoAnnotations.openMocks(this);
         facebookAuthenticator = new FacebookAuthenticator();
+        mockFBAuthenticator = new FacebookAuthenticator();
+    }
+
+    @AfterMethod
+    public void tearDown() {
+        if (mockedLoggerUtils != null) {
+            try {
+                mockedLoggerUtils.close();
+            } catch (Exception e) {
+                // Ignore
+            }
+            mockedLoggerUtils = null;
+        }
+        if (mockedServiceURLBuilder != null) {
+            try {
+                mockedServiceURLBuilder.close();
+            } catch (Exception e) {
+                // Ignore
+            }
+            mockedServiceURLBuilder = null;
+        }
+        if (mockedFileBasedConfigBuilder != null) {
+            try {
+                mockedFileBasedConfigBuilder.close();
+            } catch (Exception e) {
+                // Ignore
+            }
+            mockedFileBasedConfigBuilder = null;
+        }
+        if (mockedOAuthClientRequest != null) {
+            try {
+                mockedOAuthClientRequest.close();
+            } catch (Exception e) {
+                // Ignore
+            }
+            mockedOAuthClientRequest = null;
+        }
     }
 
     @Test(expectedExceptions = ApplicationAuthenticatorException.class)
     public void testTokenRequestException() throws Exception {
-
-        new Expectations() {{
-            mockTokenRequestBuilder.buildQueryMessage();
-            result = new Delegate() {
-                OAuthClientRequest buildQueryMessage() throws OAuthSystemException {
-                    throw new OAuthSystemException();
-                }
-            };
-        }};
-        OAuthClientRequest oAuthClientRequest = facebookAuthenticator.buidTokenRequest(TestConstants
-                        .facebookTokenEndpoint, TestConstants.dummyClientId, TestConstants.dummyClientSecret,
+        // Mock the TokenRequestBuilder
+        OAuthClientRequest.TokenRequestBuilder mockTokenRequestBuilder = 
+                org.mockito.Mockito.mock(OAuthClientRequest.TokenRequestBuilder.class);
+        
+        // Mock the static method OAuthClientRequest.tokenLocation()
+        mockedOAuthClientRequest = mockStatic(OAuthClientRequest.class);
+        mockedOAuthClientRequest.when(() -> OAuthClientRequest.tokenLocation(anyString()))
+                .thenReturn(mockTokenRequestBuilder);
+        
+        // Mock the builder chain methods to return the same builder
+        when(mockTokenRequestBuilder.setClientId(anyString())).thenReturn(mockTokenRequestBuilder);
+        when(mockTokenRequestBuilder.setClientSecret(anyString())).thenReturn(mockTokenRequestBuilder);
+        when(mockTokenRequestBuilder.setRedirectURI(anyString())).thenReturn(mockTokenRequestBuilder);
+        when(mockTokenRequestBuilder.setCode(anyString())).thenReturn(mockTokenRequestBuilder);
+        
+        // Mock buildQueryMessage to throw OAuthSystemException
+        when(mockTokenRequestBuilder.buildQueryMessage()).thenThrow(new OAuthSystemException("Test exception"));
+        
+        // This should throw ApplicationAuthenticatorException
+        facebookAuthenticator.buidTokenRequest(TestConstants.facebookTokenEndpoint, 
+                TestConstants.dummyClientId, TestConstants.dummyClientSecret,
                 TestConstants.callbackURL, TestConstants.dummyAuthCode);
     }
 
     @Test
     public void testInvalidTokenRequest() throws Exception {
-
-        new Expectations() {
-            { /* define in static block */
-                mockHttpServletRequest.getParameter("state");
-                returns(TestConstants.dummyCommonAuthId, null);
-            }
-        };
+        when(mockHttpServletRequest.getParameter("state"))
+                .thenReturn(TestConstants.dummyCommonAuthId)
+                .thenReturn(null);
+        
         Assert.assertEquals(facebookAuthenticator.getContextIdentifier(mockHttpServletRequest), TestConstants
                 .dummyCommonAuthId);
         Assert.assertNull(facebookAuthenticator.getContextIdentifier(mockHttpServletRequest));
@@ -126,76 +174,62 @@ public class FacebookAuthenticatorTests {
 
     @Test
     public void testCanHandle() throws Exception {
-
-        new Expectations() {
-            { /* define in static block */
-                mockHttpServletRequest.getParameter(FacebookAuthenticatorConstants.OAUTH2_PARAM_STATE);
-                result =
-                        (TestConstants.dummyCommonAuthId + ",facebook");
-                mockHttpServletRequest.getParameter(FacebookAuthenticatorConstants.OAUTH2_GRANT_TYPE_CODE);
-                result = ("Authorization");
-            }
-        };
+        mockedLoggerUtils = mockStatic(LoggerUtils.class);
+        mockedLoggerUtils.when(LoggerUtils::isDiagnosticLogsEnabled).thenReturn(false);
+        
+        when(mockHttpServletRequest.getParameter(FacebookAuthenticatorConstants.OAUTH2_PARAM_STATE))
+                .thenReturn(TestConstants.dummyCommonAuthId + ",facebook");
+        when(mockHttpServletRequest.getParameter(FacebookAuthenticatorConstants.OAUTH2_GRANT_TYPE_CODE))
+                .thenReturn("Authorization");
+        
         Assert.assertEquals(facebookAuthenticator.canHandle(mockHttpServletRequest), true);
     }
 
     @Test
     public void testCanHandleForNativeSDKBasedFederation() throws Exception {
+        when(mockHttpServletRequest.getParameter(FacebookAuthenticatorConstants.ACCESS_TOKEN_PARAM))
+                .thenReturn(accessToken);
+        when(mockHttpServletRequest.getParameter(FacebookAuthenticatorConstants.ID_TOKEN_PARAM))
+                .thenReturn(idToken);
 
-        new Expectations() {
-            { /* define in static block */
-                mockHttpServletRequest.getParameter(FacebookAuthenticatorConstants.ACCESS_TOKEN_PARAM);
-                result = accessToken;
-                mockHttpServletRequest.getParameter(FacebookAuthenticatorConstants.ID_TOKEN_PARAM);
-                result = idToken;
-            }
-        };
-
-        mockLoggerUtils(mockLoggerUtils);
+        mockedLoggerUtils = mockStatic(LoggerUtils.class);
+        mockedLoggerUtils.when(LoggerUtils::isDiagnosticLogsEnabled).thenReturn(true);
 
         Assert.assertTrue(facebookAuthenticator.canHandle(mockHttpServletRequest));
     }
 
     @Test
     public void canHandleFalse() throws Exception {
-
-        new Expectations() {
-            { /* define in static block */
-                mockHttpServletRequest.getParameter(FacebookAuthenticatorConstants.OAUTH2_PARAM_STATE);
-                result = null;
-            }
-        };
+        mockedLoggerUtils = mockStatic(LoggerUtils.class);
+        mockedLoggerUtils.when(LoggerUtils::isDiagnosticLogsEnabled).thenReturn(false);
+        
+        when(mockHttpServletRequest.getParameter(FacebookAuthenticatorConstants.OAUTH2_PARAM_STATE))
+                .thenReturn(null);
         Assert.assertEquals(facebookAuthenticator.canHandle(mockHttpServletRequest), false);
 
-        new Expectations() {
-            { /* define in static block */
-                mockHttpServletRequest.getParameter(FacebookAuthenticatorConstants.OAUTH2_PARAM_STATE);
-                result = TestConstants.dummyCommonAuthId + ",nothing";
-            }
-        };
+        when(mockHttpServletRequest.getParameter(FacebookAuthenticatorConstants.OAUTH2_PARAM_STATE))
+                .thenReturn(TestConstants.dummyCommonAuthId + ",nothing");
         Assert.assertEquals(facebookAuthenticator.canHandle(mockHttpServletRequest), false);
-        new Expectations() {
-            { /* define in static block */
-                mockHttpServletRequest.getParameter(FacebookAuthenticatorConstants.OAUTH2_PARAM_STATE);
-                result = TestConstants.dummyCommonAuthId + ",facebook";
-                mockHttpServletRequest.getParameter(FacebookAuthenticatorConstants.OAUTH2_PARAM_ERROR);
-                result = null;
-                mockHttpServletRequest.getParameter(FacebookAuthenticatorConstants.OAUTH2_GRANT_TYPE_CODE);
-                result = null;
-            }
-        };
+
+        when(mockHttpServletRequest.getParameter(FacebookAuthenticatorConstants.OAUTH2_PARAM_STATE))
+                .thenReturn(TestConstants.dummyCommonAuthId + ",facebook");
+        when(mockHttpServletRequest.getParameter(FacebookAuthenticatorConstants.OAUTH2_PARAM_ERROR))
+                .thenReturn(null);
+        when(mockHttpServletRequest.getParameter(FacebookAuthenticatorConstants.OAUTH2_GRANT_TYPE_CODE))
+                .thenReturn(null);
         Assert.assertEquals(facebookAuthenticator.canHandle(mockHttpServletRequest), false);
     }
 
     @Test
     public void initTokenEndpointWithoutConfigs() throws Exception {
-
-        new Expectations(mockFBAuthenticator) {{
-            Deencapsulation.invoke(mockFBAuthenticator, "getAuthenticatorConfig");
-            AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
-            authenticatorConfig.setParameterMap(new HashMap<String, String>());
-            result = authenticatorConfig;
-        }};
+        AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
+        authenticatorConfig.setParameterMap(new HashMap<String, String>());
+        
+        FileBasedConfigurationBuilder mockBuilder = org.mockito.Mockito.mock(FileBasedConfigurationBuilder.class);
+        mockedFileBasedConfigBuilder = mockStatic(FileBasedConfigurationBuilder.class);
+        mockedFileBasedConfigBuilder.when(FileBasedConfigurationBuilder::getInstance).thenReturn(mockBuilder);
+        when(mockBuilder.getAuthenticatorBean(anyString())).thenReturn(authenticatorConfig);
+        
         Assert.assertEquals(mockFBAuthenticator.getTokenEndpoint(), IdentityApplicationConstants.FB_TOKEN_URL);
         // Get it from static variable for the second time
         Assert.assertEquals(mockFBAuthenticator.getTokenEndpoint(), IdentityApplicationConstants.FB_TOKEN_URL);
@@ -203,16 +237,16 @@ public class FacebookAuthenticatorTests {
 
     @Test
     public void initTokenEndpointWithConfigs() throws Exception {
-
-        new Expectations(mockFBAuthenticator) {{
-            Deencapsulation.invoke(mockFBAuthenticator, "getAuthenticatorConfig");
-            AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
-            Map parameters = new HashMap();
-            parameters.put(FacebookAuthenticatorConstants
-                    .FB_TOKEN_URL, TestConstants.customFacebookEndpoint);
-            authenticatorConfig.setParameterMap(parameters);
-            result = authenticatorConfig;
-        }};
+        AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
+        Map parameters = new HashMap();
+        parameters.put(FacebookAuthenticatorConstants.FB_TOKEN_URL, TestConstants.customFacebookEndpoint);
+        authenticatorConfig.setParameterMap(parameters);
+        
+        FileBasedConfigurationBuilder mockBuilder = org.mockito.Mockito.mock(FileBasedConfigurationBuilder.class);
+        mockedFileBasedConfigBuilder = mockStatic(FileBasedConfigurationBuilder.class);
+        mockedFileBasedConfigBuilder.when(FileBasedConfigurationBuilder::getInstance).thenReturn(mockBuilder);
+        when(mockBuilder.getAuthenticatorBean(anyString())).thenReturn(authenticatorConfig);
+        
         Assert.assertEquals(mockFBAuthenticator.getTokenEndpoint(), TestConstants.customFacebookEndpoint);
         // Get it from static variable for the second time
         Assert.assertEquals(mockFBAuthenticator.getTokenEndpoint(), TestConstants.customFacebookEndpoint);
@@ -220,16 +254,16 @@ public class FacebookAuthenticatorTests {
 
     @Test
     public void initUserInfoEndpointWithConfigs() throws Exception {
-
-        new Expectations(mockFBAuthenticator) {{
-            Deencapsulation.invoke(mockFBAuthenticator, "getAuthenticatorConfig");
-            AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
-            Map parameters = new HashMap();
-            parameters.put(FacebookAuthenticatorConstants
-                    .FB_USER_INFO_URL, TestConstants.customUserInfoEndpoint);
-            authenticatorConfig.setParameterMap(parameters);
-            result = authenticatorConfig;
-        }};
+        AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
+        Map parameters = new HashMap();
+        parameters.put(FacebookAuthenticatorConstants.FB_USER_INFO_URL, TestConstants.customUserInfoEndpoint);
+        authenticatorConfig.setParameterMap(parameters);
+        
+        FileBasedConfigurationBuilder mockBuilder = org.mockito.Mockito.mock(FileBasedConfigurationBuilder.class);
+        mockedFileBasedConfigBuilder = mockStatic(FileBasedConfigurationBuilder.class);
+        mockedFileBasedConfigBuilder.when(FileBasedConfigurationBuilder::getInstance).thenReturn(mockBuilder);
+        when(mockBuilder.getAuthenticatorBean(anyString())).thenReturn(authenticatorConfig);
+        
         Assert.assertEquals(mockFBAuthenticator.getUserInfoEndpoint(), TestConstants.customUserInfoEndpoint);
         // Get it from static variable for the second time
         Assert.assertEquals(mockFBAuthenticator.getUserInfoEndpoint(), TestConstants.customUserInfoEndpoint);
@@ -237,16 +271,16 @@ public class FacebookAuthenticatorTests {
 
     @Test
     public void getStateTest() throws Exception {
-
-        new Expectations(mockFBAuthenticator) {{
-            Deencapsulation.invoke(mockFBAuthenticator, "getAuthenticatorConfig");
-            AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
-            Map parameters = new HashMap();
-            parameters.put(FacebookAuthenticatorConstants
-                    .FB_USER_INFO_URL, TestConstants.customUserInfoEndpoint);
-            authenticatorConfig.setParameterMap(parameters);
-            result = authenticatorConfig;
-        }};
+        AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
+        Map parameters = new HashMap();
+        parameters.put(FacebookAuthenticatorConstants.FB_USER_INFO_URL, TestConstants.customUserInfoEndpoint);
+        authenticatorConfig.setParameterMap(parameters);
+        
+        FileBasedConfigurationBuilder mockBuilder = org.mockito.Mockito.mock(FileBasedConfigurationBuilder.class);
+        mockedFileBasedConfigBuilder = mockStatic(FileBasedConfigurationBuilder.class);
+        mockedFileBasedConfigBuilder.when(FileBasedConfigurationBuilder::getInstance).thenReturn(mockBuilder);
+        when(mockBuilder.getAuthenticatorBean(anyString())).thenReturn(authenticatorConfig);
+        
         Assert.assertEquals(mockFBAuthenticator.getUserInfoEndpoint(), TestConstants.customUserInfoEndpoint);
         // Get it from static variable for the second time
         Assert.assertEquals(mockFBAuthenticator.getUserInfoEndpoint(), TestConstants.customUserInfoEndpoint);
@@ -254,13 +288,14 @@ public class FacebookAuthenticatorTests {
 
     @Test
     public void initUserInfoEndpointWithoutConfigs() throws Exception {
-
-        new Expectations(mockFBAuthenticator) {{
-            Deencapsulation.invoke(mockFBAuthenticator, "getAuthenticatorConfig");
-            AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
-            authenticatorConfig.setParameterMap(new HashMap<String, String>());
-            result = authenticatorConfig;
-        }};
+        AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
+        authenticatorConfig.setParameterMap(new HashMap<String, String>());
+        
+        FileBasedConfigurationBuilder mockBuilder = org.mockito.Mockito.mock(FileBasedConfigurationBuilder.class);
+        mockedFileBasedConfigBuilder = mockStatic(FileBasedConfigurationBuilder.class);
+        mockedFileBasedConfigBuilder.when(FileBasedConfigurationBuilder::getInstance).thenReturn(mockBuilder);
+        when(mockBuilder.getAuthenticatorBean(anyString())).thenReturn(authenticatorConfig);
+        
         Assert.assertEquals(mockFBAuthenticator.getUserInfoEndpoint(), IdentityApplicationConstants.FB_USER_INFO_URL);
         // Get it from instance variable for the second time
         Assert.assertEquals(mockFBAuthenticator.getUserInfoEndpoint(), IdentityApplicationConstants.FB_USER_INFO_URL);
@@ -290,30 +325,24 @@ public class FacebookAuthenticatorTests {
 
     @Test
     public void testGetLoginTypeWithNull() throws Exception {
-        new Expectations() {
-            {
-                mockHttpServletRequest.getParameter("state");
-                result = null;
-            }
-        };
+        when(mockHttpServletRequest.getParameter("state")).thenReturn(null);
         Assert.assertNull(facebookAuthenticator.getLoginType(mockHttpServletRequest), "getLoginType returned an " +
                 "unexpected result");
     }
 
     @Test
     public void testInitiateAuthRequest() throws Exception {
-
-        mockLoggerUtils(mockLoggerUtils);
+        mockedLoggerUtils = mockStatic(LoggerUtils.class);
+        mockedLoggerUtils.when(LoggerUtils::isDiagnosticLogsEnabled).thenReturn(false);
+        
         final String[] redirectedUrl = new String[1];
-        buildExpectationsForInitiateReq(TestConstants.customFacebookEndpoint, "profile", TestConstants.callbackURL);
-        new Expectations() {{
-            mockHttpServletResponse.sendRedirect(anyString);
-            result = new Delegate() {
-                void sendRedirect(String redirectURL) {
-                    redirectedUrl[0] = redirectURL;
-                }
-            };
-        }};
+        setupInitiateReqMocks(TestConstants.customFacebookEndpoint, "profile", TestConstants.callbackURL);
+        
+        doAnswer(invocation -> {
+            redirectedUrl[0] = invocation.getArgument(0);
+            return null;
+        }).when(mockHttpServletResponse).sendRedirect(anyString());
+        
         mockFBAuthenticator.initiateAuthenticationRequest(mockHttpServletRequest, mockHttpServletResponse,
                 mockAuthenticationContext);
 
@@ -326,55 +355,38 @@ public class FacebookAuthenticatorTests {
                 "State parameter is not present in redirect url");
     }
 
-    @Test(expectedExceptions = AuthenticationFailedException.class)
-    public void testInitAuthReqWithOAuthSystemException() throws Exception {
-
-        mockLoggerUtils(mockLoggerUtils);
-        buildExpectationsForInitiateReq(TestConstants.customFacebookEndpoint, "profile", TestConstants.callbackURL);
-        new Expectations() {{
-            mockHttpServletResponse.sendRedirect(anyString);
-            result = new Delegate() {
-                void sendRedirect(String redirectURL) throws OAuthSystemException {
-                    throw new OAuthSystemException("Error while doing IO operation");
-                }
-            };
-        }};
-        mockFBAuthenticator.initiateAuthenticationRequest(mockHttpServletRequest, mockHttpServletResponse,
-                mockAuthenticationContext);
-    }
 
     @Test(expectedExceptions = AuthenticationFailedException.class)
     public void testInitiateAuthReqWithIOException() throws Exception {
-
-        mockLoggerUtils(mockLoggerUtils);
-        buildExpectationsForInitiateReq(TestConstants.customFacebookEndpoint, "profile", TestConstants.callbackURL);
-        new Expectations() {{
-            mockHttpServletResponse.sendRedirect(anyString);
-            result = new Delegate() {
-                void sendRedirect(String redirectURL) throws IOException {
-                    throw new IOException("Error while doing IO operation");
-                }
-            };
-        }};
+        mockedLoggerUtils = mockStatic(LoggerUtils.class);
+        mockedLoggerUtils.when(LoggerUtils::isDiagnosticLogsEnabled).thenReturn(false);
+        
+        setupInitiateReqMocks(TestConstants.customFacebookEndpoint, "profile", TestConstants.callbackURL);
+        
+        doThrow(new IOException("Error while doing IO operation"))
+                .when(mockHttpServletResponse).sendRedirect(anyString());
+        
         mockFBAuthenticator.initiateAuthenticationRequest(mockHttpServletRequest, mockHttpServletResponse,
                 mockAuthenticationContext);
     }
 
     @Test
     public void testInitiateAuthReqWithDefaultConfigs() throws Exception {
-
         final String[] redirectedUrl = new String[1];
 
-        mockServiceURLBuilder(mockServiceURLBuilder);
-        buildExpectationsForInitiateReq(null, null, null);
-        new Expectations() {{
-            mockHttpServletResponse.sendRedirect(anyString);
-            result = new Delegate() {
-                void sendRedirect(String redirectURL) {
-                    redirectedUrl[0] = redirectURL;
-                }
-            };
-        }};
+        mockedLoggerUtils = mockStatic(LoggerUtils.class);
+        mockedLoggerUtils.when(LoggerUtils::isDiagnosticLogsEnabled).thenReturn(false);
+        
+        mockedServiceURLBuilder = mockStatic(ServiceURLBuilder.class);
+        TestUtils.mockServiceURLBuilder(mockedServiceURLBuilder);
+        
+        setupInitiateReqMocks(null, null, null);
+        
+        doAnswer(invocation -> {
+            redirectedUrl[0] = invocation.getArgument(0);
+            return null;
+        }).when(mockHttpServletResponse).sendRedirect(anyString());
+        
         mockFBAuthenticator.initiateAuthenticationRequest(mockHttpServletRequest, mockHttpServletResponse,
                 mockAuthenticationContext);
         Assert.assertTrue(redirectedUrl[0].contains("scope=email"), "Scope is not present in redirection url");
@@ -386,35 +398,26 @@ public class FacebookAuthenticatorTests {
                 "State parameter is not present in redirect url");
     }
 
-    private void buildExpectationsForInitiateReq(final String fbURL, final String scope, final String callbackURL) {
+    private void setupInitiateReqMocks(final String fbURL, final String scope, final String callbackURL) throws Exception {
+        AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
+        Map parameters = new HashMap();
+        parameters.put(FacebookAuthenticatorConstants.FB_AUTHZ_URL, fbURL);
+        authenticatorConfig.setParameterMap(parameters);
+        
+        if (mockedFileBasedConfigBuilder == null) {
+            FileBasedConfigurationBuilder mockBuilder = org.mockito.Mockito.mock(FileBasedConfigurationBuilder.class);
+            mockedFileBasedConfigBuilder = mockStatic(FileBasedConfigurationBuilder.class);
+            mockedFileBasedConfigBuilder.when(FileBasedConfigurationBuilder::getInstance).thenReturn(mockBuilder);
+            when(mockBuilder.getAuthenticatorBean(anyString())).thenReturn(authenticatorConfig);
+        }
 
-        new Expectations(mockFBAuthenticator) {{
-            Deencapsulation.invoke(mockFBAuthenticator, "getAuthenticatorConfig");
-            AuthenticatorConfig authenticatorConfig = new AuthenticatorConfig();
-            Map parameters = new HashMap();
-            parameters.put(FacebookAuthenticatorConstants.FB_AUTHZ_URL, fbURL);
-            authenticatorConfig.setParameterMap(parameters);
-            result = authenticatorConfig;
-        }};
-
-        new Expectations() {
-            { /* define in static block */
-                Map parameters = new HashMap();
-                parameters.put(FacebookAuthenticatorConstants.CLIENT_ID, TestConstants.dummyClientId);
-                parameters.put(FacebookAuthenticatorConstants.SCOPE, scope);
-                parameters.put(FacebookAuthenticatorConstants.CLIENT_ID, TestConstants.dummyClientId);
-                parameters.put(FacebookAuthenticatorConstants.FB_CALLBACK_URL, callbackURL);
-                mockAuthenticationContext.getAuthenticatorProperties();
-                result = parameters;
-            }
-        };
-
-        new Expectations() {
-            { /* define in static block */
-                mockAuthenticationContext.getContextIdentifier();
-                result = TestConstants.dummyCommonAuthId;
-            }
-        };
+        Map authParams = new HashMap();
+        authParams.put(FacebookAuthenticatorConstants.CLIENT_ID, TestConstants.dummyClientId);
+        authParams.put(FacebookAuthenticatorConstants.SCOPE, scope);
+        authParams.put(FacebookAuthenticatorConstants.FB_CALLBACK_URL, callbackURL);
+        
+        when(mockAuthenticationContext.getAuthenticatorProperties()).thenReturn(authParams);
+        when(mockAuthenticationContext.getContextIdentifier()).thenReturn(TestConstants.dummyCommonAuthId);
     }
 
     @Test
@@ -426,27 +429,12 @@ public class FacebookAuthenticatorTests {
 
     @Test
     public void testGetAuthInitiationData() {
-
-        new Expectations() {
-            {
-                mockAuthenticationContext.getExternalIdP();
-                result = externalIdPConfig;
-            }
-        };
-        new Expectations() {
-            {
-                externalIdPConfig.getIdPName();
-                result = "Facebook";
-            }
-        };
-        new Expectations() {
-            {
-                mockAuthenticationContext.getProperty(
-                        FacebookAuthenticatorConstants.AUTHENTICATOR_NAME +
-                                FacebookAuthenticatorConstants.REDIRECT_URL_SUFFIX);
-                result = redirectUrl;
-            }
-        };
+        when(mockAuthenticationContext.getExternalIdP()).thenReturn(externalIdPConfig);
+        when(externalIdPConfig.getIdPName()).thenReturn("Facebook");
+        when(mockAuthenticationContext.getProperty(
+                FacebookAuthenticatorConstants.AUTHENTICATOR_NAME +
+                        FacebookAuthenticatorConstants.REDIRECT_URL_SUFFIX))
+                .thenReturn(redirectUrl);
 
         Optional<AuthenticatorData> authenticatorData = facebookAuthenticator.getAuthInitiationData
                 (mockAuthenticationContext);
@@ -470,49 +458,17 @@ public class FacebookAuthenticatorTests {
 
     @Test
     public void testGetAuthInitiationDataForNativeSDKBasedFederation() {
-
         IdentityProviderProperty property = new IdentityProviderProperty();
         property.setName(IdPManagementConstants.IS_TRUSTED_TOKEN_ISSUER);
         property.setValue("true");
         IdentityProviderProperty[] identityProviderProperties = new IdentityProviderProperty[1];
         identityProviderProperties[0] = property;
 
-        new Expectations() {
-            {
-                mockAuthenticationContext.getExternalIdP();
-                result = externalIdPConfig;
-            }
-        };
-        new Expectations() {
-            {
-                externalIdPConfig.getIdPName();
-                result = "Facebook";
-            }
-        };
-        new Expectations() {
-            {
-                externalIdPConfig.getIdentityProvider();
-                result = identityProvider;
-            }
-        };
-        new Expectations() {
-            {
-                identityProvider.getIdpProperties();
-                result = identityProviderProperties;
-            }
-        };
-        new Expectations() {
-            {
-                mockAuthenticationContext.getAuthenticatorProperties();
-                result = authenticatorProperties;
-            }
-        };
-        new Expectations() {
-            {
-                mockAuthenticationContext.getExternalIdP();
-                result = externalIdPConfig;
-            }
-        };
+        when(mockAuthenticationContext.getExternalIdP()).thenReturn(externalIdPConfig);
+        when(externalIdPConfig.getIdPName()).thenReturn("Facebook");
+        when(externalIdPConfig.getIdentityProvider()).thenReturn(identityProvider);
+        when(identityProvider.getIdpProperties()).thenReturn(identityProviderProperties);
+        when(mockAuthenticationContext.getAuthenticatorProperties()).thenReturn(authenticatorProperties);
 
         authenticatorProperties.put(OIDCAuthenticatorConstants.CLIENT_ID, dummyClientId);
 

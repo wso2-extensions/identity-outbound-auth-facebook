@@ -49,19 +49,6 @@
             <plugins>
                 <plugin>
                     <groupId>org.apache.felix</groupId>
-                    <artifactId>maven-scr-plugin</artifactId>
-                    <version>${maven.scr.plugin.version}</version>
-                    <executions>
-                        <execution>
-                            <id>generate-scr-scrdescriptor</id>
-                            <goals>
-                                <goal>scr</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.felix</groupId>
                     <artifactId>maven-bundle-plugin</artifactId>
                     <version>${maven.bundle.plugin.version}</version>
                     <extensions>true</extensions>
@@ -144,12 +131,12 @@
             </plugin>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>2.3.1</version>
+                <version>${maven.compiler.plugin.version}</version>
                 <inherited>true</inherited>
                 <configuration>
                     <encoding>UTF-8</encoding>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <source>21</source>
+                    <target>21</target>
                 </configuration>
             </plugin>
             <plugin>
@@ -235,6 +222,12 @@
                     <version>${carbon.identity.framework.version}</version>
                 </dependency>
                 <dependency>
+                    <groupId>org.wso2.carbon.identity.framework</groupId>
+                    <artifactId>org.wso2.carbon.identity.testutil</artifactId>
+                    <version>${carbon.identity.framework.version}</version>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
                     <groupId>org.wso2.orbit.com.nimbusds</groupId>
                     <artifactId>nimbus-jose-jwt</artifactId>
                     <version>${nimbusds.version}</version>
@@ -278,9 +271,9 @@
                     <version>${testng.version}</version>
                 </dependency>
                 <dependency>
-                    <groupId>org.jmockit</groupId>
-                    <artifactId>jmockit</artifactId>
-                    <version>${jmockit.version}</version>
+                    <groupId>org.mockito</groupId>
+                    <artifactId>mockito-core</artifactId>
+                    <version>${mockito.version}</version>
                     <scope>test</scope>
                 </dependency>
                     <dependency>
@@ -328,7 +321,7 @@
 
         <carbon.user.api.imp.pkg.version.range>[1.0.1, 2.0.0)</carbon.user.api.imp.pkg.version.range>
         <!-- Servlet API -->
-        <imp.pkg.version.javax.servlet>[2.6.0, 3.0.0)</imp.pkg.version.javax.servlet>
+        <imp.pkg.version.javax.servlet>[3.1.0, 4.0.0)</imp.pkg.version.javax.servlet>
 
         <!-- Commons -->
         <commons-lang.wso2.osgi.version.range>[2.6.0,3.0.0)</commons-lang.wso2.osgi.version.range>
@@ -344,16 +337,14 @@
 
         <maven.buildnumber.plugin.version>1.4</maven.buildnumber.plugin.version>
         <maven.scr.plugin.version>1.7.2</maven.scr.plugin.version>
-        <maven.bundle.plugin.version>2.4.0</maven.bundle.plugin.version>
+        <maven.bundle.plugin.version>5.1.9</maven.bundle.plugin.version>
         <maven.compiler.plugin.version>2.3.1</maven.compiler.plugin.version>
         <carbon.p2.plugin.version>1.5.3</carbon.p2.plugin.version>
 
-        <testng.version>6.9.10</testng.version>
-        <jacoco.version>0.7.9</jacoco.version>
-        <maven.surefire.plugin.version>2.18.1</maven.surefire.plugin.version>
-        <jmockit.version>1.35</jmockit.version>
-    
+        <testng.version>7.10.1</testng.version>
         <jacoco.version>0.8.12</jacoco.version>
+        <maven.surefire.plugin.version>3.2.5</maven.surefire.plugin.version>
+        <mockito.version>5.14.2</mockito.version>
     </properties>
 
 </project>
